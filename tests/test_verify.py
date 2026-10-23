@@ -319,5 +319,15 @@ class VerificationContractTests(unittest.TestCase):
 
 
 
+    def test_image_set_string_url_escapes_use_owned_asset_policy(self) -> None:
+        self.ready(r'#write { background: image-set("https\3a //outside.example/img.svg" 1x); }')
+        self.assertIn("external or absolute asset URL", self.errors())
+        (self.theme / "assets").mkdir()
+        (self.theme / "assets" / "a b.svg").write_text("<svg/>", encoding="utf-8")
+        self.ready(r'#write { background: image-set("assets/a\20 b.svg" 2x); }')
+        self.assertEqual("", self.errors())
+
+
+
 if __name__ == "__main__":
     unittest.main()

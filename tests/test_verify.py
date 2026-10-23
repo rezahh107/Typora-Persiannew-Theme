@@ -229,5 +229,95 @@ class VerificationContractTests(unittest.TestCase):
         self.assertEqual("", self.errors())
 
 
+    def test_image_set_string_sources_are_owned_local_assets(self) -> None:
+        (self.theme / "assets").mkdir()
+        for name in ("small.svg", "large.svg"):
+            (self.theme / "assets" / name).write_text("<svg/>", encoding="utf-8")
+        self.ready(
+            '#write { background: image-set("assets/small.svg" 1x type("image/svg+xml"), '
+            + "'assets/large.svg' 2x); }"
+        )
+        self.assertEqual("", self.errors())
+
+    def test_image_set_string_external_sources_are_rejected(self) -> None:
+        for css_name in ("image-set", r'im\61ge-set', "-webkit-image-set", r'image\2d set"):
+            with self.subTest(css_name=css_name):
+                self.ready('#write { background: ' + css_name
+                           + '("https://outside.example/missing.svg" 1x); }')
+                self.assertIn("external or absolute asset URL", self.errors())
+
+    def test_image_set_string_missing_and_cross_theme_sources_are_rejected(self) -> None:
+        self.ready('#write { background: image-set("assets/missing.svg" 1x); }')
+        self.assertIn("CSS asset not found", self.errors())
+        other = self.root / "themes" / "another"
+        (other / "assets").mkdir(parents=True)
+        (other / "assets" / "outside.svg").write_text("<svg/>", encoding="utf-8")
+        (other / "README.md").write_text("# Another\n", encoding="utf-8")
+        (other / "theme.json").write_text(
+            json.dumps({"id": "another", "css": "another.css", "status": "source-pending"}),
+            encoding="utf-8",
+        )
+        self.ready('#write { background: image-set("../another/assets/outside.svg" 2x); }')
+        self.assertIn("theme escape", self.errors())
+
+    def test_image_set_nested_functions_do_not_hide_string_sources(self) -> None:
+        self.ready(
+            '#write { background: image-set('
+            'linear-gradient(red, blue) 1x, '
+            '"https://outside.example/unsafe.svg" 2x); }'
+        )
+        self.assertIn("external or absolute asset URL", self.errors())
+
+    def test_image_set_strings_in_content_and_comments_are_not_resources(self) -> None:
+        self.ready(
+            r'''#write::before { content: 'image-set("https://outside.example/x.svg" 1x)'; }'''
+            + '\n/* image-set("https://outside.example/y.svg" 2x) */\n'
+            + '#write { color: navy; }'
+        )
+        self.assertEqual("", self.errors())
+
+    def test_unquoted_url_escaped_spaces_and_parentheses_are_valid(self) -> None:
+        (self.theme / "assets").mkdir()
+        for name in ("a b.svg", "a(b).svg"):
+            (self.theme / "assets" / name).write_text("<svg/>", encoding="utf-8")
+        for spelling in (
+            r'url(assets/a\ b.svg)',
+            r'url(assets/a\20 b.svg)',
+            r'url(assets/a\(b\).svg)',
+            r'url(assets/a\28 b\29 .svg)',
+            r'u\72l(assets/a\ b.svg)',
+            r'u\72l(assets/a\(b\).svg)',
+        ):
+            with self.subTest(spelling=spelling):
+                self.ready("#write { background: " + spelling + "; }")
+                self.assertEqual("", self.errors())
+
+    def test_unquoted_url_invalid_unescaped_space_and_paren_remain_rejected(self) -> None:
+        for spelling in ("url(assets/a b.svg)", "url(assets/a(b).svg)"):
+            with self.subTest(spelling=spelling):
+                self.ready("#write { background: " + spelling + "; }")
+                self.assertIn("malformed CSS url()", self.errors())
+
+    def test_unquoted_url_escaped_external_and_missing_are_not_accepted(self) -> None:
+        for spelling, error in (
+            (r'url(https\3a //outside.example/img.svg)', "external or absolute asset URL"),
+            (r'url(assets/does\ not-exist.svg)', "CSS asset not found"),
+        ):
+            with self.subTest(spelling=spelling):
+                self.ready("#write { background: " + spelling + "; }")
+                self.assertIn(error, self.errors())
+
+    def test_mixed_valid_image_set_and_invalid_remote_string_fails(self) -> None:
+        (self.theme / "assets").mkdir()
+        (self.theme / "assets" / "good.svg").write_text("<svg/>", encoding="utf-8")
+        self.ready(
+            '#write { background: image-set('
+            'url("assets/good.svg") 1x, '
+            '"https://outside.example/evil.svg" 2x); }'
+        )
+        self.assertIn("external or absolute asset URL", self.errors())
+
+
+
 if __name__ == "__main__":
     unittest.main()

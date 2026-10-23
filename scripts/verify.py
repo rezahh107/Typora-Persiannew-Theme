@@ -151,20 +151,13 @@ def _has_css_import_at_keyword(source: str) -> bool:
             _, i = _css_escape(source, i)
         elif (char.isascii() and (char.isalnum() or char in "_-")) or ord(char) >= 0x80:
             name, end = _css_name(source, i)
-            if name.lower() in ("image-set", "-webkit-image-set") and end < len(source) and source[end] == "(":
-            source_urls, source_errors = _image_set_string_urls(source, end + 1)
-            urls.extend(source_urls)
-            errors.extend(source_errors)
-        if name.lower() == "url" and end < len(source) and source[end] == "(":
+            if name.lower() == "url" and end < len(source) and source[end] == "(":
                 i = _skip_css_url(source, end + 1)
             else:
                 i = end
         else:
             i += 1
     return False
-
-
-
 
 
 def _decode_css_url_argument(raw: str) -> tuple[str, str | None]:
@@ -276,6 +269,10 @@ def _css_resource_urls(source: str) -> tuple[list[str], list[str]]:
         else:
             i += 1
             continue
+        if name.lower() in ("image-set", "-webkit-image-set") and end < len(source) and source[end] == "(":
+            source_urls, source_errors = _image_set_string_urls(source, end + 1)
+            urls.extend(source_urls)
+            errors.extend(source_errors)
         if name.lower() == "url" and end < len(source) and source[end] == "(":
             after = _skip_css_url(source, end + 1)
             if after <= end + 1 or source[after - 1] != ")":

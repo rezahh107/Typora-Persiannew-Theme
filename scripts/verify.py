@@ -63,12 +63,112 @@ def strip_comments_and_check_braces(source: str) -> tuple[str, list[str]]:
     return "".join(result), errors
 
 
+
+# Only enough CSS tokenization to identify import at-keywords accurately.
+# CSS Syntax Level 3: https://www.w3.org/TR/css-syntax-3/#tokenization
+_CSS_HEX = "0123456789abcdefABCDEF"
+_CSS_WHITESPACE = " \t\n\r\f"
+
+
+def _css_escape(source: str, at: int) -> tuple[str, int]:
+    """Decode one valid CSS identifier escape at a backslash index."""
+    i = at + 1
+    if i >= len(source) or source[i] in "\n\r\f":
+        return "", i  # invalid escape (not an identifier character)
+    if source[i] not in _CSS_HEX:
+        return source[i], i + 1
+    start = i
+    while i < len(source) and i - start < 6 and source[i] in _CSS_HEX:
+        i += 1
+    codepoint = int(source[start:i], 16)
+    if i < len(source) and source[i] in _CSS_WHITESPACE:
+        # CRLF counts as one newline in CSS preprocessing.
+        i += 2 if source[i:i + 2] == "\r\n" else 1
+    if codepoint == 0 or 0xD800 <= codepoint <= 0xDFFF or codepoint > 0x10FFFF:
+        return "\uFFFD", i
+    return chr(codepoint), i
+
+
+def _css_name(source: str, at: int) -> tuple[str, int]:
+    """Consume a CSS name with escapes; retain its entire token boundary."""
+    pieces: list[str] = []
+    i = at
+    while i < len(source):
+        char = source[i]
+        if char == "\\" and i + 1 < len(source) and source[i + 1] not in "\n\r\f":
+            decoded, i = _css_escape(source, i)
+            pieces.append(decoded)
+        elif (char.isascii() and (char.isalnum() or char in "_-")) or ord(char) >= 0x80:
+            pieces.append(char)
+            i += 1
+        else:
+            break
+    return "".join(pieces), i
+
+
+def _skip_css_string(source: str, at: int) -> int:
+    """Skip quoted CSS text, including escapes that contain quote characters."""
+    quote = source[at]
+    i = at + 1
+    while i < len(source):
+        if source[i] == "\\":
+            _, i = _css_escape(source, i)
+        elif source[i] == quote:
+            return i + 1
+        else:
+            i += 1
+    return i
+
+
+def _skip_css_url(source: str, at: int) -> int:
+    """Skip a url(...) token body so embedded @ characters are not at-keywords."""
+    i = at
+    while i < len(source):
+        if source[i] in "'\"":
+            i = _skip_css_string(source, i)
+        elif source[i] == "\\":
+            _, i = _css_escape(source, i)
+        elif source[i] == ")":
+            return i + 1
+        else:
+            i += 1
+    return i
+
+
+def _has_css_import_at_keyword(source: str) -> bool:
+    """Find a real CSS @import token, not quoted text or an ident prefix."""
+    i = 0
+    while i < len(source):
+        char = source[i]
+        if char in "'\"":
+            i = _skip_css_string(source, i)
+        elif char == "@":
+            name, end = _css_name(source, i + 1)
+            if name.lower() == "import":
+                return True
+            i = max(end, i + 1)
+        elif char == "\\":
+            # An escaped @ is part of an identifier, not an at-keyword.
+            _, i = _css_escape(source, i)
+        elif (char.isascii() and (char.isalnum() or char in "_-")) or ord(char) >= 0x80:
+            name, end = _css_name(source, i)
+            if name.lower() == "url" and end < len(source) and source[end] == "(":
+                i = _skip_css_url(source, end + 1)
+            else:
+                i = end
+        else:
+            i += 1
+    return False
+
+
+
+
 def check_css(theme: Path, css: Path) -> list[str]:
     source = css.read_text(encoding="utf-8-sig")
     if not source.strip():
         return ["declared CSS is empty"]
     clean, errors = strip_comments_and_check_braces(source)
-    if re.search(r"@import\b", clean, re.I):
+    if _has_css_import_at_keyword(clean):
         errors.append("@import requires manual dependency review; unsupported by initial verifier")
     for found in URL.finditer(clean):
         value = found.group("value").strip()

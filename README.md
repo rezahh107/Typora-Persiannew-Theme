@@ -2,7 +2,7 @@
 
 A multi-theme repository and AI-assisted workflow for designing, testing, installing, maintaining, and eventually releasing independent [Typora](https://typora.io/) themes.
 
-**Current state (2026-10-23): foundation in progress; no installable theme yet.** PersianNew is the first intended theme, but its original v13 CSS and the reported v14 design source have **not** been found in this repository. Do not present historic descriptions as verified source or claim compatibility without testing.
+**Current state (2026-10-23): foundation in progress; no qualified or installable theme yet.** PersianNew's genuine v13 CSS has now been recovered and preserved byte-for-byte as an [unqualified historical input](themes/persiannew/INTAKE.md), **not** as the declared install CSS. The reported v14 source remains unverified. Source recovery does not prove Typora compatibility or authorize font redistribution.
 
 ## Start here
 

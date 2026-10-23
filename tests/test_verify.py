@@ -240,7 +240,7 @@ class VerificationContractTests(unittest.TestCase):
         self.assertEqual("", self.errors())
 
     def test_image_set_string_external_sources_are_rejected(self) -> None:
-        for css_name in ("image-set", r'im\61ge-set', "-webkit-image-set", r'image\2d set"):
+        for css_name in ("image-set", r'im\61ge-set', "-webkit-image-set", r'image\2d set'):
             with self.subTest(css_name=css_name):
                 self.ready('#write { background: ' + css_name
                            + '("https://outside.example/missing.svg" 1x); }')

@@ -143,5 +143,91 @@ class VerificationContractTests(unittest.TestCase):
 
 
 
+    def test_ordinary_owned_url_forms_still_pass(self) -> None:
+        (self.theme / "assets").mkdir()
+        (self.theme / "assets" / "good.svg").write_text("<svg/>", encoding="utf-8")
+        for spelling in (
+            'url("assets/good.svg")',
+            "url('assets/good.svg')",
+            "url(assets/good.svg)",
+        ):
+            with self.subTest(spelling=spelling):
+                self.ready(f"#write {{ background: {spelling}; }}")
+                self.assertEqual("", self.errors())
+
+    def test_escaped_url_function_with_owned_asset_passes(self) -> None:
+        (self.theme / "assets").mkdir()
+        (self.theme / "assets" / "good.svg").write_text("<svg/>", encoding="utf-8")
+        spellings = (
+            r'u\72l',
+            r'\75rl',
+            r'\000075rl',
+            r'\75 rl',
+            r'u\72\6c',
+            r'\55RL',
+            r'u\000072l',
+            r'U\72L',
+            r'u\rl',
+            r'u/**/rl',
+        )
+        for spelling in spellings:
+            with self.subTest(spelling=spelling):
+                self.ready(f'#write {{ background: {spelling}("assets/good.svg"); }}')
+                self.assertEqual("", self.errors())
+
+    def test_escaped_url_function_external_reference_fails(self) -> None:
+        for spelling in (r'u\72l', r'\75rl', r'\000075rl', r'\75 rl', r'u\72\6c', r'\55RL'):
+            with self.subTest(spelling=spelling):
+                self.ready(f'#write {{ background: {spelling}("https://example.org/x.svg"); }}')
+                self.assertIn("external or absolute asset URL", self.errors())
+
+    def test_escaped_url_function_missing_local_reference_fails(self) -> None:
+        self.ready(r'#write { background: u\72l("assets/missing.svg"); }')
+        self.assertIn("CSS asset not found", self.errors())
+
+    def test_escaped_url_function_cross_theme_reference_fails(self) -> None:
+        other = self.root / "themes" / "another"
+        (other / "assets").mkdir(parents=True)
+        (other / "assets" / "x.svg").write_text("<svg/>", encoding="utf-8")
+        (other / "README.md").write_text("# Another\n", encoding="utf-8")
+        (other / "theme.json").write_text(
+            json.dumps({"id": "another", "css": "another.css", "status": "source-pending"}),
+            encoding="utf-8",
+        )
+        self.ready(r'#write { background: \75rl("../another/assets/x.svg"); }')
+        self.assertIn("theme escape", self.errors())
+
+    def test_escaped_url_resource_values_cannot_bypass_policy(self) -> None:
+        for resource, error in (
+            (r'https\3a //example.org/x.svg', "external or absolute asset URL"),
+            (r'\2e \2e /another/assets/x.svg', "theme escape"),
+            (r'assets/\6d issing.svg', "CSS asset not found"),
+        ):
+            with self.subTest(resource=resource):
+                self.ready('#write { background: u\\72l("' + resource + '"); }')
+                self.assertIn(error, self.errors())
+
+    def test_css_strings_and_comments_with_url_text_are_harmless(self) -> None:
+        self.ready(
+            r'''#write::before { content: 'u\72l("https://example.org/x.svg") url(assets/missing.svg)'; }'''
+            + '\n/* u\\72l("https://example.org/x.svg") */\n'
+            + '#write { color: navy; }'
+        )
+        self.assertEqual("", self.errors())
+
+    def test_mixed_valid_asset_plus_escaped_invalid_resource_fails(self) -> None:
+        (self.theme / "assets").mkdir()
+        (self.theme / "assets" / "ok.svg").write_text("<svg/>", encoding="utf-8")
+        self.ready(
+            '#write { background: url("assets/ok.svg"), '
+            + r'u\72l("https://example.org/evil.svg")'
+            + '; }'
+        )
+        self.assertIn("external or absolute asset URL", self.errors())
+
+    def test_pending_theme_remains_untouched_by_url_scan(self) -> None:
+        self.assertEqual("", self.errors())
+
+
 if __name__ == "__main__":
     unittest.main()

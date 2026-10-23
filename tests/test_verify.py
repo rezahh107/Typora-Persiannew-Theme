@@ -91,5 +91,57 @@ class VerificationContractTests(unittest.TestCase):
         self.assertIn("missing or empty fixture", self.errors())
 
 
+    def test_string_form_import_is_rejected(self) -> None:
+        self.ready('@import "https://example.org/theme.css";')
+        self.assertIn("@import", self.errors())
+
+    def test_escaped_import_spellings_are_rejected_with_string_urls(self) -> None:
+        spellings = (
+            r'@\69mport',
+            r'@\000069mport',
+            r'@\69 mport',
+            '@\\69\tmport',
+            r'@im\70ort',
+            r'@imp\6f rt',
+            r'@i\mport',
+            r'@\49MPORT',
+            r'@\69\6d\70\6f\72\74',
+            r'@im/**/port',
+        )
+        for spelling in spellings:
+            with self.subTest(spelling=spelling):
+                self.ready(spelling + ' "https://example.org/other.css";')
+                self.assertIn("@import", self.errors())
+
+    def test_escaped_import_with_local_url_form_is_rejected(self) -> None:
+        (self.theme / "assets").mkdir()
+        (self.theme / "assets" / "good.css").write_text("p{}", encoding="utf-8")
+        self.ready(r'@im\70ort url("assets/good.css");')
+        self.assertIn("@import", self.errors())
+
+    def test_import_text_in_comments_is_harmless(self) -> None:
+        self.ready('/* @import "https://example.org/font.css"; */\n'
+                   r'/* @im\70ort "https://example.org/font.css"; */'
+                   '\n#write { color: red; }')
+        self.assertEqual("", self.errors())
+
+    def test_legitimate_quoted_import_text_is_harmless(self) -> None:
+        self.ready(r'''#write::before { content: "@import \69mport \\" text"; }''')
+        self.assertEqual("", self.errors())
+
+    def test_other_at_keywords_and_prefixed_names_are_not_imports(self) -> None:
+        self.ready('@media print { #write { color: black; } }\n'
+                   '@import-other { #write { color: red; } }\n'
+                   '@importer { #write { color: blue; } }')
+        self.assertEqual("", self.errors())
+
+    def test_local_unquoted_url_containing_import_text_is_harmless(self) -> None:
+        (self.theme / "assets").mkdir()
+        (self.theme / "assets" / "@import.svg").write_text("<svg/>", encoding="utf-8")
+        self.ready("#write { background: url(assets/@import.svg); }")
+        self.assertEqual("", self.errors())
+
+
+
 if __name__ == "__main__":
     unittest.main()

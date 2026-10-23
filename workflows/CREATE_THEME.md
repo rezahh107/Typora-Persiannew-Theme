@@ -1,0 +1,13 @@
+# Repeatable AI-assisted theme creation/edit workflow
+
+This is a workflow for an **authorized GitHub-capable executor**, not a promise of auto-connectivity.
+
+1. **Read authority and actual state.** Load the [Owner goal](https://docs.google.com/document/d/1_tY5lHTuDW4Kt8ujrU--vAcNXYj4T1rKRMLvEhKQLIw/edit), root `AGENTS.md`, theme README/manifest and current files/history. Consult [Typora source register](../knowledge/typora/INDEX.md). For a first theme, determine whether source is missing rather than reconstructing from recollection.
+2. **Turn the Owner brief into testable intent.** Record audience, language/direction, typography, light/dark, spacing, code, print, assets, version/OS and installation expectations. Mark unknowns. Ask only for decisions that materially affect design/authority (e.g., intended source or font rights).
+3. **Design the smallest independent theme.** Pick a unique lowercase-hyphen ID. Change only `themes/<id>/` plus useful shared fixtures/knowledge. Work on a branch. Use CSS and local cleared assets; avoid a generator or cross-theme CSS dependency. A major visual redesign should have reviewable preview evidence before approval.
+4. **Implement and document.** Add/update `theme.json`, install-named `<id>.css` and `README.md` with usage, asset/license evidence, current compatibility state and restrictions. Mark `ready` only with real CSS; `source-pending` means no install CSS. Do not make unverifiable claims about authentic PersianNew sources.
+5. **Verify structurally.** Run `python3 scripts/verify.py`; record the branch Head/check result. Checks are bounded to repository structure, registered files and simple CSS/resource sanity. They are **not** a CSS language parser or Typora runtime emulator.
+6. **Preview in the real target when available.** Copy the install CSS/resources into Typora's theme folder, restart, select, and use [manual scenarios](../tests/MANUAL_TYPORA.md) for both fixture files. Record exact Typora version, OS, color mode, override CSS, first render and post-CodeMirror behavior, code highlighting, print/PDF and screenshots. Say `NOT_EXECUTED` for unavailable paths rather than substituting browser rendering.
+7. **Reviewable PR, never silent integration.** Describe exact source changes, official documentation basis, executed tests, visual/runtime results and failures, font/legal risks, visual evidence and rollback (revert PR/change selected theme). Owner explicitly approves merge; a separate authorization controls any Release. Follow [release destination](RELEASE_DESTINATION.md).
+
+For a second/third theme, repeat with a new sibling directory. Don't modify PersianNew or other theme files unless the task explicitly requires it; shared verification must continue to pass.

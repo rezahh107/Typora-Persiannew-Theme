@@ -151,7 +151,11 @@ def _has_css_import_at_keyword(source: str) -> bool:
             _, i = _css_escape(source, i)
         elif (char.isascii() and (char.isalnum() or char in "_-")) or ord(char) >= 0x80:
             name, end = _css_name(source, i)
-            if name.lower() == "url" and end < len(source) and source[end] == "(":
+            if name.lower() in ("image-set", "-webkit-image-set") and end < len(source) and source[end] == "(":
+            source_urls, source_errors = _image_set_string_urls(source, end + 1)
+            urls.extend(source_urls)
+            errors.extend(source_errors)
+        if name.lower() == "url" and end < len(source) and source[end] == "(":
                 i = _skip_css_url(source, end + 1)
             else:
                 i = end
@@ -164,22 +168,21 @@ def _has_css_import_at_keyword(source: str) -> bool:
 
 
 def _decode_css_url_argument(raw: str) -> tuple[str, str | None]:
-    """Decode CSS escapes in a local/remote URL argument, not a whole CSS grammar."""
-    raw = raw.strip()
+    """Decode CSS URL escapes, distinguishing raw punctuation from escaped data."""
+    raw = raw.strip(_CSS_WHITESPACE)
     quoted = raw.startswith(("'", '"'))
     if quoted:
         end = _skip_css_string(raw, 0)
-        if end < 2 or raw[end - 1] != raw[0] or raw[end:].strip():
+        if end < 2 or raw[end - 1] != raw[0] or raw[end:].strip(_CSS_WHITESPACE):
             return "", "malformed CSS url() argument"
         payload = raw[1:end - 1]
     else:
-        if any(ch in raw for ch in "'\"()") or any(ch in _CSS_WHITESPACE for ch in raw):
-            return "", "malformed CSS url() argument"
         payload = raw
     decoded: list[str] = []
     i = 0
     while i < len(payload):
-        if payload[i] == "\\":
+        char = payload[i]
+        if char == "\\":
             if i + 1 >= len(payload):
                 return "", "invalid CSS URL escape"
             if payload[i + 1] in "\n\r\f":
@@ -187,12 +190,64 @@ def _decode_css_url_argument(raw: str) -> tuple[str, str | None]:
                     return "", "invalid CSS URL escape"
                 i += 3 if payload[i + 1:i + 3] == "\r\n" else 2
                 continue
-            char, i = _css_escape(payload, i)
-            decoded.append(char)
+            value, i = _css_escape(payload, i)
+            decoded.append(value)
         else:
-            decoded.append(payload[i])
+            if not quoted and (char in "'\"()" or char in _CSS_WHITESPACE):
+                return "", "malformed CSS url() argument"
+            decoded.append(char)
             i += 1
     return "".join(decoded), None
+
+
+def _image_set_string_urls(source: str, start: int) -> tuple[list[str], list[str]]:
+    """Collect string-valued first sources in image-set() options.
+
+    CSS Images 4 treats the first <string> in an image-set option as a URL.
+    Other strings (e.g. type("image/png")) are not resource URLs.
+    Keep nested functions opaque here: ordinary url() references are discovered
+    by the existing scanner as it continues through the function body.
+    """
+    urls: list[str] = []
+    errors: list[str] = []
+    depth = 1
+    option_start = True
+    i = start
+    while i < len(source):
+        ch = source[i]
+        if ch in "'\"":
+            end = _skip_css_string(source, i)
+            if depth == 1 and option_start:
+                value, problem = _decode_css_url_argument(source[i:end])
+                if problem:
+                    errors.append(problem)
+                else:
+                    urls.append(value)
+            if depth == 1:
+                option_start = False
+            i = end
+            continue
+        if ch == "\\" and i + 1 < len(source) and source[i + 1] not in "\n\r\f":
+            _, i = _css_escape(source, i)
+            if depth == 1:
+                option_start = False
+            continue
+        if ch == "(":
+            if depth == 1:
+                option_start = False
+            depth += 1
+        elif ch == ")":
+            depth -= 1
+            if depth == 0:
+                return urls, errors
+        elif depth == 1:
+            if ch == ",":
+                option_start = True
+            elif ch not in _CSS_WHITESPACE:
+                option_start = False
+        i += 1
+    errors.append("unterminated image-set()")
+    return urls, errors
 
 
 def _css_resource_urls(source: str) -> tuple[list[str], list[str]]:

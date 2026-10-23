@@ -126,7 +126,7 @@ class VerificationContractTests(unittest.TestCase):
         self.assertEqual("", self.errors())
 
     def test_legitimate_quoted_import_text_is_harmless(self) -> None:
-        self.ready(r'''#write::before { content: "@import \69mport \\" text"; }''')
+        self.ready(r'''#write::before { content: "@import \69mport \" text"; }''')
         self.assertEqual("", self.errors())
 
     def test_other_at_keywords_and_prefixed_names_are_not_imports(self) -> None:

@@ -10,7 +10,6 @@ from pathlib import Path
 from urllib.parse import unquote
 
 SLUG = re.compile(r"[a-z]+(?:-[a-z]+)*\Z")
-URL = re.compile(r"""url\(\s*(?P<quote>["']?)(?P<value>.*?)(?P=quote)\s*\)""", re.I | re.S)
 KEYS = {"id", "css", "status"}
 FIXTURES = ("rtl-ltr.md", "code-fences.md")
 
@@ -163,6 +162,84 @@ def _has_css_import_at_keyword(source: str) -> bool:
 
 
 
+
+def _decode_css_url_argument(raw: str) -> tuple[str, str | None]:
+    """Decode CSS escapes in a local/remote URL argument, not a whole CSS grammar."""
+    raw = raw.strip()
+    quoted = raw.startswith(("'", '"'))
+    if quoted:
+        end = _skip_css_string(raw, 0)
+        if end < 2 or raw[end - 1] != raw[0] or raw[end:].strip():
+            return "", "malformed CSS url() argument"
+        payload = raw[1:end - 1]
+    else:
+        if any(ch in raw for ch in "'\"()") or any(ch in _CSS_WHITESPACE for ch in raw):
+            return "", "malformed CSS url() argument"
+        payload = raw
+    decoded: list[str] = []
+    i = 0
+    while i < len(payload):
+        if payload[i] == "\\":
+            if i + 1 >= len(payload):
+                return "", "invalid CSS URL escape"
+            if payload[i + 1] in "\n\r\f":
+                if not quoted:
+                    return "", "invalid CSS URL escape"
+                i += 3 if payload[i + 1:i + 3] == "\r\n" else 2
+                continue
+            char, i = _css_escape(payload, i)
+            decoded.append(char)
+        else:
+            decoded.append(payload[i])
+            i += 1
+    return "".join(decoded), None
+
+
+def _css_resource_urls(source: str) -> tuple[list[str], list[str]]:
+    """Recognize real url(...) function tokens using the same CSS-name decoding as @import.
+
+    The input has already had comments removed. Strings elsewhere in CSS are
+    skipped; URL bodies are decoded and then passed to existing asset checks.
+    """
+    urls: list[str] = []
+    errors: list[str] = []
+    i = 0
+    while i < len(source):
+        char = source[i]
+        if char in "'\"":
+            i = _skip_css_string(source, i)
+            continue
+        if char == "@":
+            # The following name is an at-keyword, not a function identifier.
+            _, end = _css_name(source, i + 1)
+            i = max(end, i + 1)
+            continue
+        if char == "\\" and i + 1 < len(source) and source[i + 1] not in "\n\r\f":
+            name, end = _css_name(source, i)
+        elif (char.isascii() and (char.isalnum() or char in "_-")) or ord(char) >= 0x80:
+            name, end = _css_name(source, i)
+        else:
+            i += 1
+            continue
+        if name.lower() == "url" and end < len(source) and source[end] == "(":
+            after = _skip_css_url(source, end + 1)
+            if after <= end + 1 or source[after - 1] != ")":
+                errors.append("unterminated CSS url()")
+                i = after
+                continue
+            value, problem = _decode_css_url_argument(source[end + 1:after - 1])
+            if problem:
+                errors.append(problem)
+            else:
+                urls.append(value)
+            i = after
+        else:
+            i = end
+    return urls, errors
+
+
+
+
 def check_css(theme: Path, css: Path) -> list[str]:
     source = css.read_text(encoding="utf-8-sig")
     if not source.strip():
@@ -170,8 +247,9 @@ def check_css(theme: Path, css: Path) -> list[str]:
     clean, errors = strip_comments_and_check_braces(source)
     if _has_css_import_at_keyword(clean):
         errors.append("@import requires manual dependency review; unsupported by initial verifier")
-    for found in URL.finditer(clean):
-        value = found.group("value").strip()
+    resource_urls, url_errors = _css_resource_urls(clean)
+    errors.extend(url_errors)
+    for value in resource_urls:
         if not value:
             errors.append("empty CSS url()")
         elif value.startswith(("data:", "#")):

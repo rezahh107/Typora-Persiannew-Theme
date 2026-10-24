@@ -15,17 +15,21 @@ SHOTS = (
     "typora-12s.png", "themes-menu.png",
     "candidate-rtl-6s.png", "candidate-rtl-18s.png",
     "candidate-selected-menu.png", "legacy-rtl-6s.png", "legacy-rtl-18s.png",
-    "legacy-selected-menu.png", "legacy-code-early.png", "legacy-code-late.png",
+    "legacy-selected-menu.png", "code-menu-before-legacy-rtl.png", "legacy-code-early.png", "legacy-code-late.png",
     "legacy-code-focus-1s.png", "legacy-code-focus-13s.png",
     "code-menu-before-candidate.png", "candidate-code-early.png",
     "candidate-code-late.png", "candidate-code-focus-1s.png",
     "candidate-code-focus-13s.png", "code-candidate-selected-menu.png",
     "legacy-again-code-rest.png", "legacy-again-selected-menu.png",
+    "code-menu-before-legacy-again.png", "code-menu-before-candidate-edit.png",
+    "code-candidate-edit-selected-menu.png", "code-menu-before-legacy-edit.png",
+    "code-legacy-edit-selected-menu.png",
     "candidate-code-edit.png", "legacy-code-edit.png", "typora-30s.png",
 )
 TEXTS = (
     "environment.txt", "comparison.txt", "windows-12s.txt",
-    "windows-code.txt", "windows-30s.txt", "edit-results.txt",
+    "windows-code.txt", "windows-edit.txt", "windows-30s.txt",
+    "edit-results.txt", "state-report.txt",
 )
 ALLOWLIST = frozenset((*SHOTS, *TEXTS))
 

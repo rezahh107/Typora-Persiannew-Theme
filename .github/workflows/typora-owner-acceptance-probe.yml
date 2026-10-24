@@ -26,7 +26,7 @@ jobs:
           curl -fsSL https://downloads.typora.io/typora.gpg | sudo tee /etc/apt/keyrings/typora.gpg >/dev/null
           echo 'deb [signed-by=/etc/apt/keyrings/typora.gpg] https://downloads.typora.io/linux ./' | sudo tee /etc/apt/sources.list.d/typora.list
           sudo apt-get update -qq
-          sudo apt-get install -y -qq typora xvfb openbox xdotool wmctrl scrot xclip dbus-x11 fonts-noto-core
+          sudo apt-get install -y -qq typora xvfb openbox xdotool wmctrl scrot xclip dbus-x11 fonts-noto-core gsettings-desktop-schemas dconf-gsettings-backend poppler-utils
           dpkg-query -W typora
       - name: Run genuine Typora bounded comparative experiment
         shell: bash

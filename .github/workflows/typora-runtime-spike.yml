@@ -35,6 +35,11 @@ jobs:
           echo "Commit: $(git rev-parse HEAD)" | tee "$OUT/environment.txt"
           echo "OS: $(lsb_release -ds)" | tee -a "$OUT/environment.txt"
           dpkg-query -W typora | tee -a "$OUT/environment.txt"
+          for family in Vazir Vazirmatn 'Amazon Ember Display'; do
+            printf 'fc-match(%s): ' "$family" | tee -a "$OUT/environment.txt"
+            fc-match -f '%{family}: %{file}\n' "$family" | tee -a "$OUT/environment.txt"
+          done
+          (fc-list -f '%{family}\n' | grep -Ei 'Vazir|Amazon Ember' | sort -u || true) > "$OUT/installed-target-fonts.txt"
           printf 'Fonts: ' >> "$OUT/environment.txt"
           fc-list -f '%{family}\n' | sort -u | grep -Ei 'Noto|Vazir|Ember|DejaVu' | head -25 >> "$OUT/environment.txt" || true
           export DISPLAY=:99
@@ -92,6 +97,11 @@ jobs:
             scrot -z "$OUT/legacy-code-early.png"
             sleep 12
             scrot -z "$OUT/legacy-code-late.png"
+            xdotool mousemove --sync 260 378 click 1
+            sleep 1
+            scrot -z "$OUT/legacy-code-focus-1s.png"
+            sleep 12
+            scrot -z "$OUT/legacy-code-focus-13s.png"
             xdotool mousemove --sync 315 55 click 1
             sleep 1
             scrot -z "$OUT/code-menu-before-candidate.png"
@@ -100,6 +110,11 @@ jobs:
             scrot -z "$OUT/candidate-code-early.png"
             sleep 12
             scrot -z "$OUT/candidate-code-late.png"
+            xdotool mousemove --sync 260 378 click 1
+            sleep 1
+            scrot -z "$OUT/candidate-code-focus-1s.png"
+            sleep 12
+            scrot -z "$OUT/candidate-code-focus-13s.png"
             xdotool mousemove --sync 315 55 click 1
             sleep 1
             scrot -z "$OUT/code-candidate-selected-menu.png"
@@ -107,6 +122,14 @@ jobs:
           else
             echo 'No code-fences.md window: code-fence comparison NOT_PROVEN' | tee -a "$OUT/environment.txt"
           fi
+          for pair in 'candidate-rtl-6s legacy-rtl-6s' 'candidate-rtl-18s legacy-rtl-18s' 'candidate-code-early legacy-code-early' 'candidate-code-late legacy-code-late'; do
+            read -r first second <<< "$pair"
+            if cmp -s "$OUT/$first.png" "$OUT/$second.png"; then
+              echo "IDENTICAL_PNG: $first vs $second" | tee -a "$OUT/comparison.txt"
+            else
+              echo "DIFFERENT_PNG: $first vs $second" | tee -a "$OUT/comparison.txt"
+            fi
+          done
           sleep 2
           wmctrl -lxp | tee "$OUT/windows-30s.txt" || true
           scrot -z "$OUT/typora-30s.png"

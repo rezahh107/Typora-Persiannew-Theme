@@ -1,9 +1,9 @@
-name: Typora real-runtime feasibility spike (review-only)
+name: Typora real-runtime evidence spike (review-only)
 
 on:
   push:
     branches:
-      - spike/typora-real-runtime-20261024
+      - spike/typora-evidence-hardening-20261024
 
 permissions:
   contents: read
@@ -13,35 +13,43 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
-      - name: Checkout exact spike commit
+      - name: Checkout exact experimental commit
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
-      - name: Install Typora from official signed Ubuntu repository
+      - name: Deterministic negative controls for required evidence gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/typora_spike_evidence.py negative-controls
+          python3 scripts/verify.py
+      - name: Install official Typora and X11 observation tools
         shell: bash
         run: |
           set -euo pipefail
           sudo mkdir -p /etc/apt/keyrings
-          curl -fsSL https://downloads.typora.io/typora.gpg | sudo tee /etc/apt/keyrings/typora.gpg > /dev/null
+          curl -fsSL https://downloads.typora.io/typora.gpg | sudo tee /etc/apt/keyrings/typora.gpg >/dev/null
           echo 'deb [signed-by=/etc/apt/keyrings/typora.gpg] https://downloads.typora.io/linux ./' | sudo tee /etc/apt/sources.list.d/typora.list
           sudo apt-get update -qq
           sudo apt-get install -y -qq typora xvfb openbox xdotool wmctrl scrot fonts-noto-core
           dpkg-query -W typora
-          sha256sum themes/persiannew/legacy/PersianNew2.css
-      - name: Launch actual Typora without forbidden debug switches
+      - name: Real Typora; assert native selection, windows, captures, comparisons and edits
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p "$RUNNER_TEMP/typora-spike"
-          OUT="$RUNNER_TEMP/typora-spike"
-          echo "Commit: $(git rev-parse HEAD)" | tee "$OUT/environment.txt"
-          echo "OS: $(lsb_release -ds)" | tee -a "$OUT/environment.txt"
-          dpkg-query -W typora | tee -a "$OUT/environment.txt"
-          for family in Vazir Vazirmatn 'Amazon Ember Display'; do
-            printf 'fc-match(%s): ' "$family" | tee -a "$OUT/environment.txt"
-            fc-match -f '%{family}: %{file}\n' "$family" | tee -a "$OUT/environment.txt"
-          done
-          (fc-list -f '%{family}\n' | grep -Ei 'Vazir|Amazon Ember' | sort -u || true) > "$OUT/installed-target-fonts.txt"
-          printf 'Fonts: ' >> "$OUT/environment.txt"
-          fc-list -f '%{family}\n' | sort -u | grep -Ei 'Noto|Vazir|Ember|DejaVu' | head -25 >> "$OUT/environment.txt" || true
+          # Capture only the app/menu/code region; omit bottom licensing-status UI.
+          GUARD='scripts/typora_spike_evidence.py'
+          OUT="$RUNNER_TEMP/typora-spike-raw"
+          mkdir -p "$OUT/work"
+          PROFILE="$HOME/.config/Typora/profile.data"
+          {
+            printf 'Commit: %s\n' "$(git rev-parse HEAD)"
+            printf 'OS: %s\n' "$(lsb_release -ds)"
+            dpkg-query -W typora
+            for family in Vazir Vazirmatn 'Amazon Ember Display'; do
+              printf 'fc-match(%s): ' "$family"
+              fc-match -f '%{family}: %{file}\n' "$family"
+            done
+            sha256sum themes/persiannew/legacy/PersianNew2.css themes/persiannew/persiannew.css
+          } > "$OUT/environment.txt"
           export DISPLAY=:99
           Xvfb :99 -screen 0 1440x900x24 -nolisten tcp >"$OUT/xvfb.log" 2>&1 &
           sleep 2
@@ -50,101 +58,160 @@ jobs:
           mkdir -p "$HOME/.config/Typora/themes"
           cp themes/persiannew/legacy/PersianNew2.css "$HOME/.config/Typora/themes/persiannew-legacy.css"
           cp themes/persiannew/persiannew.css "$HOME/.config/Typora/themes/persiannew-candidate.css"
-          sha256sum "$HOME/.config/Typora/themes/"persiannew-*.css | tee -a "$OUT/environment.txt"
-          echo "Opening $(realpath tests/fixtures/rtl-ltr.md)" | tee -a "$OUT/environment.txt"
-          typora "$(realpath tests/fixtures/rtl-ltr.md)" --disable-gpu >"$OUT/typora.stdout.log" 2>&1 &
+          sha256sum "$HOME/.config/Typora/themes"/persiannew-*.css >> "$OUT/environment.txt"
+
+          native_window() {
+            local listing="$1" title="$2"
+            wmctrl -lxp >"$OUT/$listing"
+            python3 "$GUARD" window "$OUT/$listing" "$title"
+          }
+          native_theme() {
+            local expected="$1" verified=0
+            for try in 1 2 3 4 5 6; do
+              if python3 "$GUARD" theme "$PROFILE" "$expected"; then
+                verified=1
+                break
+              fi
+              sleep 1
+            done
+            if [ "$verified" != 1 ]; then
+              echo "FAIL/NOT_PROVEN: native selected theme is not $expected" >&2
+              exit 1
+            fi
+            echo "VERIFIED_NATIVE_SELECTION $expected" >> "$OUT/state-report.txt"
+          }
+          select_theme() {
+            local expected="$1" yy="$2" before="$3" selected="$4"
+            xdotool mousemove --sync 315 55 click 1
+            sleep 1
+            scrot -z -a 0,0,1440,825 "$OUT/$before"
+            xdotool mousemove --sync 397 "$yy" click 1
+            native_theme "$expected"
+            xdotool mousemove --sync 1210 760
+            xdotool mousemove --sync 315 55 click 1
+            sleep 1
+            scrot -z -a 0,0,1440,825 "$OUT/$selected"
+            xdotool key Escape
+            xdotool mousemove --sync 1210 760
+          }
+          edit_caret_and_save() {
+            local target="$1" shot="$2"
+            xdotool mousemove --sync 265 392 click 1
+            xdotool key --clearmodifiers End
+            xdotool type --clearmodifiers --delay 65 'CI123'
+            xdotool key --clearmodifiers Left Left
+            xdotool type --clearmodifiers --delay 65 Z
+            sleep 2
+            scrot -z -a 0,0,1440,825 "$OUT/$shot"
+            xdotool key --clearmodifiers ctrl+s
+            sleep 2
+            if ! grep -q 'CI1Z23' "$target"; then
+              echo "FAIL: code editing/caret persistence not proven for $target" >&2
+              exit 1
+            fi
+            printf 'EDIT_CARET_SAVE_VERIFIED %s CI1Z23\n' "$(basename "$target")" >> "$OUT/edit-results.txt"
+          }
+          : > "$OUT/state-report.txt"
+          : > "$OUT/edit-results.txt"
+
+          typora "$(realpath tests/fixtures/rtl-ltr.md)" --disable-gpu >"$OUT/typora-rtl.log" 2>&1 &
           APP_PID=$!
-          echo "Typora launched with PID=$APP_PID" | tee -a "$OUT/environment.txt"
           sleep 12
-          wmctrl -lxp | tee "$OUT/windows-12s.txt" || true
-          xdotool search --onlyvisible --name '.' getwindowname >"$OUT/window-titles-12s.txt" 2>&1 || true
-          scrot -z "$OUT/typora-12s.png"
-          WID=$(wmctrl -lxp | awk '/typora.typora/ {print $1; exit}')
-          if [ -n "$WID" ]; then
-            wmctrl -ir "$WID" -e 0,50,40,1300,820
-            xdotool windowactivate --sync "$WID"
-            xdotool mousemove --sync 315 55 click 1
-            sleep 1
-            scrot -z "$OUT/themes-menu.png"
-            # Native menu rows observed on identical fixed-size X11 window.
-            xdotool mousemove --sync 397 182 click 1
-            sleep 6
-            scrot -z "$OUT/candidate-rtl-6s.png"
-            sleep 12
-            scrot -z "$OUT/candidate-rtl-18s.png"
-            xdotool mousemove --sync 315 55 click 1
-            sleep 1
-            scrot -z "$OUT/candidate-selected-menu.png"
-            xdotool mousemove --sync 397 215 click 1
-            sleep 6
-            scrot -z "$OUT/legacy-rtl-6s.png"
-            sleep 12
-            scrot -z "$OUT/legacy-rtl-18s.png"
-            xdotool mousemove --sync 315 55 click 1
-            sleep 1
-            scrot -z "$OUT/legacy-selected-menu.png"
-            xdotool key Escape
-          fi
-          # Probe second fixture under legacy then candidate in same process.
-          typora "$(realpath tests/fixtures/code-fences.md)" --disable-gpu >"$OUT/open-code-fences.log" 2>&1 &
+          kill -0 "$APP_PID"
+          RWID="$(native_window windows-12s.txt 'rtl-ltr.md - Typora')"
+          wmctrl -ir "$RWID" -e 0,50,40,1300,820
+          xdotool windowactivate --sync "$RWID"
+          scrot -z -a 0,0,1440,825 "$OUT/typora-12s.png"
+          select_theme 'persiannew-candidate.css' 182 'themes-menu.png' 'candidate-selected-menu.png'
+          sleep 6
+          scrot -z -a 0,0,1440,825 "$OUT/candidate-rtl-6s.png"
+          sleep 12
+          scrot -z -a 0,0,1440,825 "$OUT/candidate-rtl-18s.png"
+          select_theme 'persiannew-legacy.css' 215 'code-menu-before-legacy-rtl.png' 'legacy-selected-menu.png'
+          sleep 6
+          scrot -z -a 0,0,1440,825 "$OUT/legacy-rtl-6s.png"
+          sleep 12
+          scrot -z -a 0,0,1440,825 "$OUT/legacy-rtl-18s.png"
+
+          cp tests/fixtures/code-fences.md "$OUT/work/code-fences.md"
+          typora "$OUT/work/code-fences.md" --disable-gpu >"$OUT/typora-code.log" 2>&1 &
           sleep 8
-          wmctrl -lxp | tee "$OUT/windows-code.txt" || true
-          CWID=$(wmctrl -lxp | awk '/code-fences.md/ {print $1; exit}')
-          if [ -n "$CWID" ]; then
-            wmctrl -ir "$CWID" -e 0,50,40,1300,820
-            xdotool windowactivate --sync "$CWID"
-            sleep 1
-            scrot -z "$OUT/legacy-code-early.png"
-            sleep 12
-            scrot -z "$OUT/legacy-code-late.png"
-            xdotool mousemove --sync 260 378 click 1
-            sleep 1
-            scrot -z "$OUT/legacy-code-focus-1s.png"
-            sleep 12
-            scrot -z "$OUT/legacy-code-focus-13s.png"
-            xdotool mousemove --sync 315 55 click 1
-            sleep 1
-            scrot -z "$OUT/code-menu-before-candidate.png"
-            xdotool mousemove --sync 397 182 click 1
-            sleep 6
-            scrot -z "$OUT/candidate-code-early.png"
-            sleep 12
-            scrot -z "$OUT/candidate-code-late.png"
-            xdotool mousemove --sync 260 378 click 1
-            sleep 1
-            scrot -z "$OUT/candidate-code-focus-1s.png"
-            sleep 12
-            scrot -z "$OUT/candidate-code-focus-13s.png"
-            xdotool mousemove --sync 315 55 click 1
-            sleep 1
-            scrot -z "$OUT/code-candidate-selected-menu.png"
-            xdotool key Escape
-          else
-            echo 'No code-fences.md window: code-fence comparison NOT_PROVEN' | tee -a "$OUT/environment.txt"
-          fi
-          for pair in 'candidate-rtl-6s legacy-rtl-6s' 'candidate-rtl-18s legacy-rtl-18s' 'candidate-code-early legacy-code-early' 'candidate-code-late legacy-code-late'; do
+          CWID="$(native_window windows-code.txt 'code-fences.md - Typora')"
+          wmctrl -ir "$CWID" -e 0,50,40,1300,820
+          xdotool windowactivate --sync "$CWID"
+          native_theme 'persiannew-legacy.css'
+          sleep 1
+          scrot -z -a 0,0,1440,825 "$OUT/legacy-code-early.png"
+          sleep 12
+          scrot -z -a 0,0,1440,825 "$OUT/legacy-code-late.png"
+          xdotool mousemove --sync 260 378 click 1
+          sleep 1
+          scrot -z -a 0,0,1440,825 "$OUT/legacy-code-focus-1s.png"
+          sleep 12
+          scrot -z -a 0,0,1440,825 "$OUT/legacy-code-focus-13s.png"
+
+          select_theme 'persiannew-candidate.css' 182 'code-menu-before-candidate.png' 'code-candidate-selected-menu.png'
+          sleep 6
+          scrot -z -a 0,0,1440,825 "$OUT/candidate-code-early.png"
+          sleep 12
+          scrot -z -a 0,0,1440,825 "$OUT/candidate-code-late.png"
+          xdotool mousemove --sync 260 378 click 1
+          sleep 1
+          scrot -z -a 0,0,1440,825 "$OUT/candidate-code-focus-1s.png"
+          sleep 12
+          scrot -z -a 0,0,1440,825 "$OUT/candidate-code-focus-13s.png"
+
+          # Explicitly preserve the real Legacy -> Candidate -> Legacy switching sequence.
+          select_theme 'persiannew-legacy.css' 215 'code-menu-before-legacy-again.png' 'legacy-again-selected-menu.png'
+          sleep 2
+          scrot -z -a 0,0,1440,825 "$OUT/legacy-again-code-rest.png"
+          select_theme 'persiannew-candidate.css' 182 'code-menu-before-candidate-edit.png' 'code-candidate-edit-selected-menu.png'
+          edit_caret_and_save "$OUT/work/code-fences.md" 'candidate-code-edit.png'
+
+          cp tests/fixtures/code-fences.md "$OUT/work/legacy-edit.md"
+          typora "$OUT/work/legacy-edit.md" --disable-gpu >"$OUT/typora-edit.log" 2>&1 &
+          sleep 7
+          EWID="$(native_window windows-edit.txt 'legacy-edit.md - Typora')"
+          wmctrl -ir "$EWID" -e 0,50,40,1300,820
+          xdotool windowactivate --sync "$EWID"
+          select_theme 'persiannew-legacy.css' 215 'code-menu-before-legacy-edit.png' 'code-legacy-edit-selected-menu.png'
+          edit_caret_and_save "$OUT/work/legacy-edit.md" 'legacy-code-edit.png'
+
+          wmctrl -lxp > "$OUT/windows-30s.txt"
+          # An unrelated X11 window is not proof of either required Typora fixture.
+          python3 "$GUARD" window "$OUT/windows-30s.txt" 'legacy-edit.md - Typora' >/dev/null
+          kill -0 "$APP_PID"
+          scrot -z -a 0,0,1440,825 "$OUT/typora-30s.png"
+          : > "$OUT/comparison.txt"
+          for pair in \
+            'candidate-rtl-6s legacy-rtl-6s' \
+            'candidate-rtl-18s legacy-rtl-18s' \
+            'candidate-code-early legacy-code-early' \
+            'candidate-code-late legacy-code-late' \
+            'candidate-code-focus-1s legacy-code-focus-1s' \
+            'candidate-code-focus-13s legacy-code-focus-13s'; do
             read -r first second <<< "$pair"
-            if cmp -s "$OUT/$first.png" "$OUT/$second.png"; then
-              echo "IDENTICAL_PNG: $first vs $second" | tee -a "$OUT/comparison.txt"
+            # Missing/invalid PNG input is fatal. Difference is reported, NEVER a parity PASS.
+            # The controlled RTL pairs must match the verified baseline.
+            # Code-fence frames are observational: transient non-fence UI pixels can differ.
+            # Every difference is explicitly NOT_PARITY rather than a successful parity claim.
+            if [[ "$first" == candidate-rtl-* ]]; then
+              python3 "$GUARD" compare "$OUT/$first.png" "$OUT/$second.png" --must-equal \
+                | tee -a "$OUT/comparison.txt"
             else
-              echo "DIFFERENT_PNG: $first vs $second" | tee -a "$OUT/comparison.txt"
+              python3 "$GUARD" compare "$OUT/$first.png" "$OUT/$second.png" \
+                | tee -a "$OUT/comparison.txt"
             fi
           done
-          sleep 2
-          wmctrl -lxp | tee "$OUT/windows-30s.txt" || true
-          scrot -z "$OUT/typora-30s.png"
-          echo "PROCESS:" | tee -a "$OUT/environment.txt"
-          ps -p "$APP_PID" -o pid,comm,stat= | tee -a "$OUT/environment.txt" || true
-          echo "Window titles:" && cat "$OUT/window-titles-12s.txt" || true
-          if [ ! -s "$OUT/windows-30s.txt" ]; then
-            echo "No X11 window visible; Typora GUI proof fails."
-            exit 1
-          fi
-      - name: Upload raw observation evidence even on failure
-        if: always()
+
+          # Stage only named observations; NEVER stage ~/.config/Typora or raw runner temp.
+          python3 "$GUARD" stage "$OUT" "$GITHUB_WORKSPACE/typora-evidence-staged"
+          python3 "$GUARD" audit "$GITHUB_WORKSPACE/typora-evidence-staged"
+          echo 'REAL_TYPORA_OBSERVATION_COMPLETE; NO FULL BEHAVIORAL PARITY CLAIM'
+      - name: Publish verified allowlisted evidence (no profile/cache/license)
         uses: actions/upload-artifact@v4
         with:
-          name: typora-real-runtime-spike
-          path: ${{ runner.temp }}/typora-spike/
-          if-no-files-found: warn
+          name: typora-bounded-evidence
+          path: typora-evidence-staged/
+          if-no-files-found: error
           retention-days: 7

@@ -61,10 +61,53 @@ jobs:
             xdotool mousemove --sync 315 55 click 1
             sleep 1
             scrot -z "$OUT/themes-menu.png"
+            # Native menu rows observed on identical fixed-size X11 window.
+            xdotool mousemove --sync 397 182 click 1
+            sleep 6
+            scrot -z "$OUT/candidate-rtl-6s.png"
+            sleep 12
+            scrot -z "$OUT/candidate-rtl-18s.png"
+            xdotool mousemove --sync 315 55 click 1
+            sleep 1
+            scrot -z "$OUT/candidate-selected-menu.png"
+            xdotool mousemove --sync 397 215 click 1
+            sleep 6
+            scrot -z "$OUT/legacy-rtl-6s.png"
+            sleep 12
+            scrot -z "$OUT/legacy-rtl-18s.png"
+            xdotool mousemove --sync 315 55 click 1
+            sleep 1
+            scrot -z "$OUT/legacy-selected-menu.png"
             xdotool key Escape
-            scrot -z "$OUT/after-themes-menu.png"
           fi
-          sleep 18
+          # Probe second fixture under legacy then candidate in same process.
+          typora "$(realpath tests/fixtures/code-fences.md)" --disable-gpu >"$OUT/open-code-fences.log" 2>&1 &
+          sleep 8
+          wmctrl -lxp | tee "$OUT/windows-code.txt" || true
+          CWID=$(wmctrl -lxp | awk '/code-fences.md/ {print $1; exit}')
+          if [ -n "$CWID" ]; then
+            wmctrl -ir "$CWID" -e 0,50,40,1300,820
+            xdotool windowactivate --sync "$CWID"
+            sleep 1
+            scrot -z "$OUT/legacy-code-early.png"
+            sleep 12
+            scrot -z "$OUT/legacy-code-late.png"
+            xdotool mousemove --sync 315 55 click 1
+            sleep 1
+            scrot -z "$OUT/code-menu-before-candidate.png"
+            xdotool mousemove --sync 397 182 click 1
+            sleep 6
+            scrot -z "$OUT/candidate-code-early.png"
+            sleep 12
+            scrot -z "$OUT/candidate-code-late.png"
+            xdotool mousemove --sync 315 55 click 1
+            sleep 1
+            scrot -z "$OUT/code-candidate-selected-menu.png"
+            xdotool key Escape
+          else
+            echo 'No code-fences.md window: code-fence comparison NOT_PROVEN' | tee -a "$OUT/environment.txt"
+          fi
+          sleep 2
           wmctrl -lxp | tee "$OUT/windows-30s.txt" || true
           scrot -z "$OUT/typora-30s.png"
           echo "PROCESS:" | tee -a "$OUT/environment.txt"

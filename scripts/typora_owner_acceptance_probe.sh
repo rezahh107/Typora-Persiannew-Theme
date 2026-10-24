@@ -153,6 +153,7 @@ python3 "$GUARD" compare "$RAW/legacy-light.png" "$RAW/candidate-light.png" >"$R
 python3 "$GUARD" compare "$RAW/legacy-dark-attempt.png" "$RAW/candidate-dark-attempt.png" >>"$RAW/comparisons.txt"
 python3 "$GUARD" compare "$RAW/legacy-code-focused.png" "$RAW/candidate-code-focused.png" >>"$RAW/comparisons.txt"
 # Explicit publication allowlist: no profile, cache, local font or license data.
+shopt -s nullglob
 for path in "$RAW"/*.png "$RAW"/environment.txt "$RAW"/results.txt "$RAW"/theme-verification.txt "$RAW"/comparisons.txt "$RAW"/*-edit-result.txt "$RAW"/pdf-results.txt "$RAW"/*-pdf-metadata.txt; do
   test -s "$path"
   cp "$path" "$STAGED/"

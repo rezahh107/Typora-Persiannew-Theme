@@ -1,0 +1,76 @@
+name: Typora real-runtime feasibility spike (review-only)
+
+on:
+  push:
+    branches:
+      - spike/typora-real-runtime-20261024
+
+permissions:
+  contents: read
+
+jobs:
+  launch:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact spike commit
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+      - name: Install Typora from official signed Ubuntu repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo mkdir -p /etc/apt/keyrings
+          curl -fsSL https://downloads.typora.io/typora.gpg | sudo tee /etc/apt/keyrings/typora.gpg > /dev/null
+          echo 'deb [signed-by=/etc/apt/keyrings/typora.gpg] https://downloads.typora.io/linux ./' | sudo tee /etc/apt/sources.list.d/typora.list
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq typora xvfb openbox xdotool wmctrl scrot fonts-noto-core
+          dpkg-query -W typora
+          sha256sum themes/persiannew/legacy/PersianNew2.css
+      - name: Launch actual Typora with Markdown fixture in Xvfb
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/typora-spike"
+          OUT="$RUNNER_TEMP/typora-spike"
+          echo "Commit: $(git rev-parse HEAD)" | tee "$OUT/environment.txt"
+          echo "OS: $(lsb_release -ds)" | tee -a "$OUT/environment.txt"
+          dpkg-query -W typora | tee -a "$OUT/environment.txt"
+          printf 'Fonts: ' >> "$OUT/environment.txt"
+          fc-list -f '%{family}\n' | sort -u | grep -Ei 'Noto|Vazir|Ember|DejaVu' | head -25 >> "$OUT/environment.txt" || true
+          export DISPLAY=:99
+          Xvfb :99 -screen 0 1440x900x24 -nolisten tcp >"$OUT/xvfb.log" 2>&1 &
+          sleep 2
+          openbox >"$OUT/openbox.log" 2>&1 &
+          sleep 2
+          mkdir -p "$HOME/.config/Typora/themes"
+          cp themes/persiannew/persiannew.css "$HOME/.config/Typora/themes/persiannew.css"
+          echo "Theme file sha256: $(sha256sum "$HOME/.config/Typora/themes/persiannew.css")" >> "$OUT/environment.txt"
+          echo "Opening $(realpath tests/fixtures/rtl-ltr.md)" | tee -a "$OUT/environment.txt"
+          typora "$(realpath tests/fixtures/rtl-ltr.md)" --disable-gpu --remote-debugging-port=9222 >"$OUT/typora.stdout.log" 2>&1 &
+          APP_PID=$!
+          echo "Typora launched with PID=$APP_PID" | tee -a "$OUT/environment.txt"
+          sleep 12
+          wmctrl -lxp | tee "$OUT/windows-12s.txt" || true
+          xdotool search --onlyvisible --name '.' getwindowname >"$OUT/window-titles-12s.txt" 2>&1 || true
+          scrot -z "$OUT/typora-12s.png"
+          curl -fsS --connect-timeout 2 --max-time 4 http://127.0.0.1:9222/json/list >"$OUT/devtools-12s.json" || true
+          sleep 18
+          wmctrl -lxp | tee "$OUT/windows-30s.txt" || true
+          scrot -z "$OUT/typora-30s.png"
+          curl -fsS --connect-timeout 2 --max-time 4 http://127.0.0.1:9222/json/list >"$OUT/devtools-30s.json" || true
+          echo "PROCESS:" | tee -a "$OUT/environment.txt"
+          ps -p "$APP_PID" -o pid,comm,stat= | tee -a "$OUT/environment.txt" || true
+          echo "Window titles:" && cat "$OUT/window-titles-12s.txt" || true
+          echo "Devtools targets:" && head -c 1800 "$OUT/devtools-30s.json" || true
+          if [ ! -s "$OUT/windows-30s.txt" ]; then
+            echo "No X11 window visible; Typora GUI proof fails."
+            exit 1
+          fi
+      - name: Upload raw observation evidence even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: typora-real-runtime-spike
+          path: ${{ runner.temp }}/typora-spike/
+          if-no-files-found: warn
+          retention-days: 7

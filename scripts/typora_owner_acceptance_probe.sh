@@ -71,7 +71,13 @@ for theme in legacy candidate; do
 done
 xdotool mousemove --sync 65 55 click 1
 sleep 1; snapshot file-menu
+xdotool mousemove --sync 90 684
+sleep 1; snapshot export-submenu
+xdotool key Escape Escape
+xdotool key --clearmodifiers alt+shift+p
+sleep 3; snapshot print-dialog-attempt
 xdotool key Escape
+record 'PRINT: native print command attempted; PDF output requires file verification'
 xdotool key --clearmodifiers ctrl+slash
 sleep 2; snapshot source-mode-attempt
 xdotool key --clearmodifiers ctrl+slash

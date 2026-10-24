@@ -108,7 +108,9 @@ for theme in legacy candidate; do
   xdotool key Return
   sleep 4
   if ! test -s "$OUT/pdf/$theme.pdf"; then
-    if wmctrl -l | grep -q ' Save
+    xdotool key Return
+    sleep 3
+  fi
   snapshot "$theme-export-after"
   if test -s "$OUT/pdf/$theme.pdf" && head -c 5 "$OUT/pdf/$theme.pdf" | grep -q '%PDF-'; then
     pdfinfo "$OUT/pdf/$theme.pdf" >"$RAW/$theme-pdf-metadata.txt"

@@ -170,6 +170,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: typora-fence-state-controls
-          path: \${{ runner.temp }}/typora-fence-states/
-          if-no-files-found: warn
+          path: ${{ runner.temp }}/typora-fence-states/
+          if-no-files-found: error
           retention-days: 7

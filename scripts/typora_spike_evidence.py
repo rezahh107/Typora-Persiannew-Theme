@@ -148,13 +148,16 @@ def negative_controls():
         must_reject("missing comparison input",
                     lambda: comparison(root / "missing-1.png", root / "missing-2.png", True))
         must_reject("missing artifact upload path", lambda: audit_staged(root / "missing-stage"))
+        invalid_path = root / "upload-is-a-file"
+        invalid_path.write_text("not a directory")
+        must_reject("invalid artifact upload path", lambda: audit_staged(invalid_path))
 
         staged = root / "stage"
         staged.mkdir()
         (staged / "config" / "Typora" / "Cache").mkdir(parents=True)
         (staged / "config" / "Typora" / "Cache" / "profile").write_text("not for upload")
         must_reject("unexpected profile/cache in staged artifact", lambda: audit_staged(staged))
-    print("NEGATIVE_CONTROLS: 7 deterministic rejection cases passed")
+    print("NEGATIVE_CONTROLS: 8 deterministic rejection cases passed")
 
 
 def main():

@@ -43,8 +43,9 @@ jobs:
           openbox >"$OUT/openbox.log" 2>&1 &
           sleep 2
           mkdir -p "$HOME/.config/Typora/themes"
-          cp themes/persiannew/persiannew.css "$HOME/.config/Typora/themes/persiannew.css"
-          echo "Theme file sha256: $(sha256sum "$HOME/.config/Typora/themes/persiannew.css")" >> "$OUT/environment.txt"
+          cp themes/persiannew/legacy/PersianNew2.css "$HOME/.config/Typora/themes/persiannew-legacy.css"
+          cp themes/persiannew/persiannew.css "$HOME/.config/Typora/themes/persiannew-candidate.css"
+          sha256sum "$HOME/.config/Typora/themes/"persiannew-*.css | tee -a "$OUT/environment.txt"
           echo "Opening $(realpath tests/fixtures/rtl-ltr.md)" | tee -a "$OUT/environment.txt"
           typora "$(realpath tests/fixtures/rtl-ltr.md)" --disable-gpu >"$OUT/typora.stdout.log" 2>&1 &
           APP_PID=$!
@@ -53,6 +54,16 @@ jobs:
           wmctrl -lxp | tee "$OUT/windows-12s.txt" || true
           xdotool search --onlyvisible --name '.' getwindowname >"$OUT/window-titles-12s.txt" 2>&1 || true
           scrot -z "$OUT/typora-12s.png"
+          WID=$(wmctrl -lxp | awk '/typora.typora/ {print $1; exit}')
+          if [ -n "$WID" ]; then
+            wmctrl -ir "$WID" -e 0,50,40,1300,820
+            xdotool windowactivate --sync "$WID"
+            xdotool mousemove --window "$WID" 267 35 click 1
+            sleep 1
+            scrot -z "$OUT/themes-menu.png"
+            xdotool key Escape
+            scrot -z "$OUT/after-themes-menu.png"
+          fi
           sleep 18
           wmctrl -lxp | tee "$OUT/windows-30s.txt" || true
           scrot -z "$OUT/typora-30s.png"

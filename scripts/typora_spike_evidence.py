@@ -72,7 +72,7 @@ def screenshot(path: Path):
     require(len(header) == 24 and header[:8] == b"\x89PNG\r\n\x1a\n"
             and header[12:16] == b"IHDR", f"invalid screenshot header: {path.name}")
     width, height = struct.unpack(">II", header[16:24])
-    require((width, height) == (1440, 900),
+    require((width, height) == (1440, 825),
             f"wrong screenshot viewport: {path.name}: {width}x{height}")
 
 

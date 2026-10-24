@@ -1,0 +1,175 @@
+name: Typora fence-state review only
+
+on:
+  push:
+    branches: [spike/typora-fence-state-review-20261024]
+
+permissions:
+  contents: read
+
+jobs:
+  observe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+      - name: Official Typora install and X11 tools
+        run: |
+          set -euo pipefail
+          sudo mkdir -p /etc/apt/keyrings
+          curl -fsSL https://downloads.typora.io/typora.gpg | sudo tee /etc/apt/keyrings/typora.gpg >/dev/null
+          echo 'deb [signed-by=/etc/apt/keyrings/typora.gpg] https://downloads.typora.io/linux ./' | sudo tee /etc/apt/sources.list.d/typora.list
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq typora xvfb openbox xdotool wmctrl scrot fonts-noto-core
+          dpkg-query -W typora
+      - name: Bounded real-GUI state experiment (fail closed on missing GUI/edit evidence)
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="$RUNNER_TEMP/typora-fence-states"
+          mkdir -p "$OUT/work"
+          export DISPLAY=:99
+          export XDG_CONFIG_HOME="$OUT/config"
+          Xvfb :99 -screen 0 1440x900x24 -nolisten tcp >"$OUT/xvfb.log" 2>&1 &
+          sleep 2
+          openbox >"$OUT/openbox.log" 2>&1 &
+          sleep 2
+          # Keep repository sources immutable; install identical copies as in PR #4.
+          mkdir -p "$XDG_CONFIG_HOME/Typora/themes"
+          cp themes/persiannew/legacy/PersianNew2.css "$XDG_CONFIG_HOME/Typora/themes/persiannew-legacy.css"
+          cp themes/persiannew/persiannew.css "$XDG_CONFIG_HOME/Typora/themes/persiannew-candidate.css"
+          sha256sum themes/persiannew/legacy/PersianNew2.css themes/persiannew/persiannew.css | tee "$OUT/input-hashes.txt"
+          sha256sum "$XDG_CONFIG_HOME"/Typora/themes/*.css | tee "$OUT/install-hashes.txt"
+          dpkg-query -W typora | tee "$OUT/environment.txt"
+          echo "HEAD=$(git rev-parse HEAD)" >>"$OUT/environment.txt"
+          for font in Vazir Vazirmatn 'Amazon Ember Display'; do
+            printf '%s => ' "$font" >>"$OUT/environment.txt"
+            fc-match -f '%{family}: %{file}\n' "$font" >>"$OUT/environment.txt"
+          done
+          cp tests/fixtures/code-fences.md "$OUT/work/code-fences.md"
+          sha256sum "$OUT/work/code-fences.md" >"$OUT/fixture-original.sha256"
+          typora "$OUT/work/code-fences.md" --disable-gpu >"$OUT/typora.log" 2>&1 &
+          APP_PID=$!
+          sleep 12
+          kill -0 "$APP_PID"
+          wmctrl -lxp | tee "$OUT/windows.txt"
+          WID=$(wmctrl -lxp | awk '/code-fences.md - Typora/ {print $1; exit}')
+          test -n "$WID" || { echo "FAIL: actual code-fences.md Typora window absent"; exit 1; }
+          wmctrl -ir "$WID" -e 0,50,40,1300,820
+          xdotool windowactivate --sync "$WID"
+          sleep 1
+          scrot -z "$OUT/startup.png"
+          # Theme menu entries were measured in the prior PR #4 artifact.
+          select_theme() {
+            local label="$1" yy="$2"
+            xdotool mousemove --sync 315 55 click 1
+            sleep 1
+            scrot -z "$OUT/menu-before-$label.png"
+            xdotool mousemove --sync 397 "$yy" click 1
+            sleep 2
+            xdotool mousemove --sync 1210 760
+            sleep 1
+            xdotool mousemove --sync 315 55 click 1
+            sleep 1
+            scrot -z "$OUT/menu-selected-$label.png"
+            xdotool key Escape
+            xdotool mousemove --sync 1210 760
+          }
+          probe_state() {
+            local label="$1"
+            echo "PROBE $label" | tee -a "$OUT/states.txt"
+            sleep 1
+            scrot -z "$OUT/$label-rest-1.png"
+            sleep 9
+            scrot -z "$OUT/$label-rest-10.png"
+            # Hover the first fence without clicking.
+            xdotool mousemove --sync 990 391
+            sleep 1
+            scrot -z "$OUT/$label-hover.png"
+            # Remove hover and observe scrollbar lifecycle.
+            xdotool mousemove --sync 1210 760
+            sleep 1
+            scrot -z "$OUT/$label-out-1.png"
+            sleep 7
+            scrot -z "$OUT/$label-out-8.png"
+            # Focus then allow CodeMirror/widget to settle; no edit yet.
+            xdotool mousemove --sync 290 392 click 1
+            sleep 1
+            scrot -z "$OUT/$label-focus-1.png"
+            sleep 12
+            scrot -z "$OUT/$label-focus-13.png"
+            # Scroll inside editor viewport and return, with visible evidence.
+            xdotool mousemove --sync 850 590 click 5
+            sleep 1
+            scrot -z "$OUT/$label-scroll-down.png"
+            xdotool mousemove --sync 850 590 click 4
+            sleep 1
+            scrot -z "$OUT/$label-scroll-up.png"
+            xdotool mousemove --sync 1210 760
+          }
+          # Legacy then candidate then legacy again, to test switching order/state.
+          select_theme legacy-a 215
+          probe_state legacy-a
+          select_theme candidate 182
+          probe_state candidate
+          select_theme legacy-b 215
+          probe_state legacy-b
+          select_theme candidate-edit 182
+          # Real edit in a *temporary copied fixture*, including caret-arrow movement.
+          xdotool mousemove --sync 265 392 click 1
+          xdotool key --clearmodifiers End
+          xdotool type --clearmodifiers --delay 65 'CI123'
+          xdotool key --clearmodifiers Left Left
+          xdotool type --clearmodifiers --delay 65 Z
+          sleep 2
+          scrot -z "$OUT/edit-candidate.png"
+          xdotool key --clearmodifiers ctrl+s
+          sleep 2
+          if ! grep -q 'CI1Z23' "$OUT/work/code-fences.md"; then
+            echo "FAIL: candidate edit/caret assertion absent in saved Markdown" | tee "$OUT/edit-failure.txt"
+            exit 1
+          fi
+          echo "CANDIDATE_EDIT_CARET_PASS: persisted CI1Z23 in temporary fixture" | tee "$OUT/edit-results.txt"
+          # Repeat on a fresh independent temp file under Legacy.
+          cp tests/fixtures/code-fences.md "$OUT/work/legacy-edit.md"
+          typora "$OUT/work/legacy-edit.md" --disable-gpu >"$OUT/legacy-open.log" 2>&1 &
+          sleep 7
+          LWID=$(wmctrl -lxp | awk '/legacy-edit.md - Typora/ {print $1; exit}')
+          test -n "$LWID" || { echo "FAIL: legacy edit fixture window absent"; exit 1; }
+          wmctrl -ir "$LWID" -e 0,50,40,1300,820
+          xdotool windowactivate --sync "$LWID"
+          select_theme legacy-edit 215
+          xdotool mousemove --sync 265 392 click 1
+          xdotool key --clearmodifiers End
+          xdotool type --clearmodifiers --delay 65 'CI123'
+          xdotool key --clearmodifiers Left Left
+          xdotool type --clearmodifiers --delay 65 Z
+          sleep 2
+          scrot -z "$OUT/edit-legacy.png"
+          xdotool key --clearmodifiers ctrl+s
+          sleep 2
+          if ! grep -q 'CI1Z23' "$OUT/work/legacy-edit.md"; then
+            echo "FAIL: legacy edit/caret assertion absent in saved Markdown" | tee "$OUT/edit-failure.txt"
+            exit 1
+          fi
+          echo "LEGACY_EDIT_CARET_PASS: persisted CI1Z23 in independent fixture" | tee -a "$OUT/edit-results.txt"
+          # Required screenshots must all exist and be nonempty; no silent success.
+          for label in legacy-a candidate legacy-b; do
+            for stage in rest-1 rest-10 hover out-1 out-8 focus-1 focus-13 scroll-down scroll-up; do
+              test -s "$OUT/$label-$stage.png" || { echo "Missing $label-$stage GUI evidence"; exit 1; }
+            done
+          done
+          test -s "$OUT/menu-selected-candidate.png"
+          test -s "$OUT/menu-selected-legacy-a.png"
+          test -s "$OUT/menu-selected-legacy-b.png"
+          test -s "$OUT/edit-legacy.png"
+          test -s "$OUT/edit-candidate.png"
+          echo 'GUI_EVIDENCE_COMPLETE: all required screenshot files exist' | tee -a "$OUT/edit-results.txt"
+      - name: Always upload truthful raw artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: typora-fence-state-controls
+          path: ${{ runner.temp }}/typora-fence-states/
+          if-no-files-found: error
+          retention-days: 7

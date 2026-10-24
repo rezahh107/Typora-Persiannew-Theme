@@ -1,0 +1,43 @@
+name: Owner acceptance discriminators (temporary, review-only)
+
+on:
+  push:
+    branches:
+      - spike/typora-owner-acceptance-20261024
+
+permissions:
+  contents: read
+
+jobs:
+  observe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact experimental code
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+      - name: Verify baseline CSS and install licensed Typora from official APT
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/verify.py
+          echo "b114384a1bd9a30f1064e8405d5ce31fef66b4af26bec33d4732b8c4b8a76fb9  themes/persiannew/legacy/PersianNew2.css" | sha256sum -c -
+          echo "b599e9528907c18acd7e98c5e4516d904bb2aeee27c62be973e7c8555b74aeef  themes/persiannew/persiannew.css" | sha256sum -c -
+          sudo mkdir -p /etc/apt/keyrings
+          curl -fsSL https://downloads.typora.io/typora.gpg | sudo tee /etc/apt/keyrings/typora.gpg >/dev/null
+          echo 'deb [signed-by=/etc/apt/keyrings/typora.gpg] https://downloads.typora.io/linux ./' | sudo tee /etc/apt/sources.list.d/typora.list
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq typora xvfb openbox xdotool wmctrl scrot xclip dbus-x11 fonts-noto-core
+          dpkg-query -W typora
+      - name: Run genuine Typora bounded comparative experiment
+        shell: bash
+        run: |
+          set -euo pipefail
+          dbus-run-session -- bash scripts/typora_owner_acceptance_probe.sh
+      - name: Publish only sanitized experiment evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: typora-owner-acceptance-observations
+          path: typora-owner-stage/
+          if-no-files-found: warn
+          retention-days: 7

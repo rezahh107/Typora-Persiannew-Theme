@@ -1,10 +1,10 @@
-# PersianNew — v13 structural candidate
+# PersianNew — v13 working CSS (merged; not released)
 
-The installable **CSS candidate** is [persiannew.css](persiannew.css). Manifest `status: ready` means the declared source file exists and passes the repository's bounded structural contract; it **does not** imply visual approval, verified Typora functionality, PDF quality or release readiness.
+The merged, installable **working CSS** is [persiannew.css](persiannew.css). Manifest `status: ready` means the declared source file exists and passes the repository's bounded structural contract; it **does not by itself** imply visual approval, verified Typora functionality, PDF quality or release readiness. Separate bounded real-Typora evidence and Owner-desktop observations are documented below and in [QUALIFICATION.md](QUALIFICATION.md).
 
 This is the first theme within a **multi-theme** repository. The original [v13 intake](INTAKE.md) and immutable [legacy/PersianNew2.css](legacy/PersianNew2.css) are preserved. See the [qualification and exact differences](QUALIFICATION.md) before expecting historical appearance. The purported original includes mixed-in conversation output; the working candidate uses the last coherent v13 CSS. Authentic v14 remains unavailable.
 
-## Manual installation (candidate only)
+## Manual installation (working CSS in main; no public release)
 
 1. In Typora, open **Preferences → Appearance → Open Theme Folder**.
 2. Copy **only** `persiannew.css` into the **root** of the opened folder (not a nested `themes/persiannew/` directory). No `fonts/` directory is required by the candidate.
@@ -13,10 +13,10 @@ This is the first theme within a **multi-theme** repository. The original [v13 i
 
 ## Typography and appearance restrictions
 
-The original CSS referenced missing Vazir regular/bold and Amazon Ember Display regular/medium binaries. The candidate looks up these families **locally** if available and falls back to installed Vazir/Vazirmatn/Tahoma and system mono/Latin fonts otherwise. **Font substitutions can change line breaks and layout**. Amazon Ember redistribution rights are unverified: no font file is shipped or required, and users must obtain any proprietary font independently and lawfully.
+The original CSS referenced missing Vazir regular/bold and Amazon Ember Display regular/medium binaries. The working CSS looks up these families **locally** if available and falls back to installed Vazir/Vazirmatn/Tahoma and system mono/Latin fonts otherwise. **Font substitutions can change line breaks and layout**. Amazon Ember redistribution rights are unverified: no font file is shipped or required, and users must obtain any proprietary font independently and lawfully.
 
-The CSS retains right-to-left body/content treatment and code-specific direction rules. It has **light default and dark OS media-query styles**; do not assume this is dark-only. Broad RTL UI rules, the delayed Persian code-fence direction report, light/dark contrasts and font embedding in PDF **have not been verified in actual Typora**.
+The CSS retains right-to-left body/content treatment and code-specific direction rules. It has **light default and dark OS media-query styles**; do not assume this is dark-only. Bounded real Typora tests on Ubuntu 24.04.5 / Typora 1.14.9-1 verified specific light/dark displays, code-fence edits and actual PDF exports; not all CodeMirror/caret scenarios or original licensed-font PDF behavior are proven.
 
-Compatibility: **NOT_PROVEN** (no validated Typora version/OS/print/PDF). Visual approval: **pending Owner**. Real Typora tests: **NOT_EXECUTED**. This CSS is a candidate, **not a release**. The safe rollback before any approved release is to remove the candidate CSS from Typora's theme folder and select a built-in theme.
+Compatibility: **BOUNDED EVIDENCE** for the tested Ubuntu/Typora 1.14.9-1 scenarios; other versions, OSes and historical licensed-font equivalence remain **NOT_PROVEN**. Owner tested a byte-identical-CSS copy under a separate filename on their own Typora and reported no material observed regression, apart from slightly heavier typography which they explicitly preferred. The exact rendered font family was not identified. PR #3 was merged with Owner authorization on 2026-10-24. This **is not a public Release** or a claim of complete parity. Roll back an installed copy by selecting another theme, or removing the CSS from Typora's theme folder if appropriate.
 
 Source, documentation/rights and regression boundaries: [QUALIFICATION.md](QUALIFICATION.md).

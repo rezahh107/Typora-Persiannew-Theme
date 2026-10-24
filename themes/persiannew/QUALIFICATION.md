@@ -1,4 +1,4 @@
-# PersianNew v13 — structural candidate qualification
+# PersianNew v13 — merged working CSS qualification (bounded)
 
 ## Provenance and selection
 
@@ -14,7 +14,7 @@
 3. Replaced six broken `url('./fonts/...')` face sources with **local-only** font lookups, preserving the original `font-family`, `unicode-range` and declared weights. The source's seventh face already uses `local()`. No external URLs, font downloads, bundled binaries or changes to shared resource policy.
 4. The manifest becomes `ready` only in the repository's narrow meaning: install CSS is present and structural verification must pass. This is **not** a runtime/visual/PDF certification.
 
-The initial 1,535 lines were not blindly deduplicated: they contain another incomplete version and inserted prose. Extraction rather than reinterpreting those fragments reduces design changes, but the chosen section is not guaranteed to reproduce every earlier variation. Owner visual review is necessary.
+The initial 1,535 lines were not blindly deduplicated: they contain another incomplete version and inserted prose. Extraction rather than reinterpreting those fragments reduces design changes, but the chosen section is not guaranteed to reproduce every earlier variation. Owner later performed a comparison on their installed Typora and preferred the working CSS's slightly heavier font; their reported comparison is bounded to the uses checked, not proof of universal parity.
 
 ## Font dependency and redistribution matrix
 
@@ -31,7 +31,7 @@ Sources: [Vazir upstream](https://github.com/rastikerdar/vazir-font), [Vazirmatn
 
 ## Typora compatibility and CodeMirror issue
 
-- Official [About Themes](https://support.typora.io/About-Themes/) describes root-level CSS installation and restart; [Write Custom Theme](https://theme.typora.io/doc/Write-Custom-Theme/) recommends document selectors and `@media print`. Source's broad `html/body` RTL `!important` rules can affect Windows/Linux UI; retained for v13 fidelity **without verified UI usability**.
+- Official [About Themes](https://support.typora.io/About-Themes/) describes root-level CSS installation and restart; [Write Custom Theme](https://theme.typora.io/doc/Write-Custom-Theme/) recommends document selectors and `@media print`. Source's broad `html/body` RTL `!important` rules can affect Windows/Linux UI; retained for v13 fidelity; bounded real Typora UI interactions were exercised, but complete cross-platform UI usability remains unverified.
 - Official [Code Block Styles](https://support.typora.io/Code-Block-Styles/) confirms pre-initialization `.md-fences` and initialized `.cm-s-inner`. The candidate preserves styles for both. Source mode uses `.cm-s-typora-default` and is a separate surface.
 - **Historical delayed code-fence direction change is NOT_PROVEN / NOT_FIXED.** The source has `unicode-bidi: plaintext` for `.md-fences` and children but also explicit LTR for descendants; CodeMirror's editable lines/caret are a separate runtime. Adding stronger CSS without reproducing the transition may harm code editing. The [code-fences fixture](../../tests/fixtures/code-fences.md) and [real Typora checklist](../../tests/MANUAL_TYPORA.md) explicitly test before and after initialization.
 - Official [RTL](https://support.typora.io/RTL/) is experimental, [About Themes](https://support.typora.io/About-Themes/) supports separate light/dark theme choices and media queries; the source's actual palette defaults to white/blue and switches to dark/yellow with `prefers-color-scheme: dark`. This **differs from the historical description** of v13 as dark-only.
@@ -42,7 +42,8 @@ Sources: [Vazir upstream](https://github.com/rastikerdar/vazir-font), [Vazirmatn
 
 - **Static/source evidence:** exact legacy blob matched on the starting main; final candidate derived from its coherent section, and a repository test guards the original SHA-256.
 - **Structural/CI evidence:** recorded separately on the exact PR Head; `python3 scripts/verify.py` checks manifest, basic CSS braces/strings, local assets, fixtures and regression tests, not CSS rendering.
-- **Real Typora:** `NOT_EXECUTED` when no licensed running Typora instance is available. No verified application version/OS, CodeMirror transition, font-resolution screenshot, print or PDF.
-- **Owner visual decision required:** local font substitutions and the light/dark variation may deviate from the expected approved look. Do not treat structural readiness as acceptance.
+- **Real Typora observations (bounded):** official Typora 1.14.9-1 on Ubuntu 24.04.5 / Xvfb ran both the preserved legacy and the working CSS under matched fixtures. Stable light/dark rendering and limited mixed RTL/LTR code-fence editing were observed without a demonstrated material Candidate regression. One independent run produced two valid native Typora 2-page A4 PDFs, with identical extracted text and pixel-identical corresponding page renders at the tested resolution; older GUI-coordinate-driven theme selection lacked independent machine confirmation. Another experiment's failure to activate dark mode or complete PDF saving does not invalidate that earlier positive evidence. These observations do **not** establish all CodeMirror caret paths, physical printing, historical font embedding or universal version/OS support. [Consolidated evidence (Drive)](https://docs.google.com/document/d/1af7KoqvBFrkAhNG05EiCic7g-vX5hm0v-qkELCW8ZxA/edit).
+- **Owner desktop comparison (2026-10-24):** the Owner installed a CSS-identical renamed test copy alongside the historical 3,024-line file in their Typora. In the paths they checked, they saw no material problem apart from slightly heavier typography resembling Vazir more closely, and explicitly preferred the new appearance. The actual rendered font family/weight was not measured; this is a direct Owner observation, not proof of full historical environment equivalence.
+- **Owner merge decision:** [PR #3](https://github.com/rezahh107/Typora-Persiannew-Theme/pull/3), exact Head `1ae0da970be18b90859e50b4228771a35608b49b`, was merged to main after Owner authorization on 2026-10-24 (merge commit `e33117eb97fd9b922786a36920ceb2be6605fead`). **Merge is not public release authorization**. Other operating systems, proprietary historical fonts, complete RTL/CodeMirror behavior and release packaging remain outside this verification.
 
 Future multi-theme automated releases remain an independent **Owner-authorized** project outcome, not part of this candidate.

@@ -35,6 +35,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # Capture only the app/menu/code region; omit bottom licensing-status UI.
           GUARD='scripts/typora_spike_evidence.py'
           OUT="$RUNNER_TEMP/typora-spike-raw"
           mkdir -p "$OUT/work"
@@ -83,13 +84,13 @@ jobs:
             local expected="$1" yy="$2" before="$3" selected="$4"
             xdotool mousemove --sync 315 55 click 1
             sleep 1
-            scrot -z "$OUT/$before"
+            scrot -z -a 0,0,1440,825 "$OUT/$before"
             xdotool mousemove --sync 397 "$yy" click 1
             native_theme "$expected"
             xdotool mousemove --sync 1210 760
             xdotool mousemove --sync 315 55 click 1
             sleep 1
-            scrot -z "$OUT/$selected"
+            scrot -z -a 0,0,1440,825 "$OUT/$selected"
             xdotool key Escape
             xdotool mousemove --sync 1210 760
           }
@@ -101,7 +102,7 @@ jobs:
             xdotool key --clearmodifiers Left Left
             xdotool type --clearmodifiers --delay 65 Z
             sleep 2
-            scrot -z "$OUT/$shot"
+            scrot -z -a 0,0,1440,825 "$OUT/$shot"
             xdotool key --clearmodifiers ctrl+s
             sleep 2
             if ! grep -q 'CI1Z23' "$target"; then
@@ -120,17 +121,17 @@ jobs:
           RWID="$(native_window windows-12s.txt 'rtl-ltr.md - Typora')"
           wmctrl -ir "$RWID" -e 0,50,40,1300,820
           xdotool windowactivate --sync "$RWID"
-          scrot -z "$OUT/typora-12s.png"
+          scrot -z -a 0,0,1440,825 "$OUT/typora-12s.png"
           select_theme 'persiannew-candidate.css' 182 'themes-menu.png' 'candidate-selected-menu.png'
           sleep 6
-          scrot -z "$OUT/candidate-rtl-6s.png"
+          scrot -z -a 0,0,1440,825 "$OUT/candidate-rtl-6s.png"
           sleep 12
-          scrot -z "$OUT/candidate-rtl-18s.png"
+          scrot -z -a 0,0,1440,825 "$OUT/candidate-rtl-18s.png"
           select_theme 'persiannew-legacy.css' 215 'code-menu-before-legacy-rtl.png' 'legacy-selected-menu.png'
           sleep 6
-          scrot -z "$OUT/legacy-rtl-6s.png"
+          scrot -z -a 0,0,1440,825 "$OUT/legacy-rtl-6s.png"
           sleep 12
-          scrot -z "$OUT/legacy-rtl-18s.png"
+          scrot -z -a 0,0,1440,825 "$OUT/legacy-rtl-18s.png"
 
           cp tests/fixtures/code-fences.md "$OUT/work/code-fences.md"
           typora "$OUT/work/code-fences.md" --disable-gpu >"$OUT/typora-code.log" 2>&1 &
@@ -140,30 +141,30 @@ jobs:
           xdotool windowactivate --sync "$CWID"
           native_theme 'persiannew-legacy.css'
           sleep 1
-          scrot -z "$OUT/legacy-code-early.png"
+          scrot -z -a 0,0,1440,825 "$OUT/legacy-code-early.png"
           sleep 12
-          scrot -z "$OUT/legacy-code-late.png"
+          scrot -z -a 0,0,1440,825 "$OUT/legacy-code-late.png"
           xdotool mousemove --sync 260 378 click 1
           sleep 1
-          scrot -z "$OUT/legacy-code-focus-1s.png"
+          scrot -z -a 0,0,1440,825 "$OUT/legacy-code-focus-1s.png"
           sleep 12
-          scrot -z "$OUT/legacy-code-focus-13s.png"
+          scrot -z -a 0,0,1440,825 "$OUT/legacy-code-focus-13s.png"
 
           select_theme 'persiannew-candidate.css' 182 'code-menu-before-candidate.png' 'code-candidate-selected-menu.png'
           sleep 6
-          scrot -z "$OUT/candidate-code-early.png"
+          scrot -z -a 0,0,1440,825 "$OUT/candidate-code-early.png"
           sleep 12
-          scrot -z "$OUT/candidate-code-late.png"
+          scrot -z -a 0,0,1440,825 "$OUT/candidate-code-late.png"
           xdotool mousemove --sync 260 378 click 1
           sleep 1
-          scrot -z "$OUT/candidate-code-focus-1s.png"
+          scrot -z -a 0,0,1440,825 "$OUT/candidate-code-focus-1s.png"
           sleep 12
-          scrot -z "$OUT/candidate-code-focus-13s.png"
+          scrot -z -a 0,0,1440,825 "$OUT/candidate-code-focus-13s.png"
 
           # Explicitly preserve the real Legacy -> Candidate -> Legacy switching sequence.
           select_theme 'persiannew-legacy.css' 215 'code-menu-before-legacy-again.png' 'legacy-again-selected-menu.png'
           sleep 2
-          scrot -z "$OUT/legacy-again-code-rest.png"
+          scrot -z -a 0,0,1440,825 "$OUT/legacy-again-code-rest.png"
           select_theme 'persiannew-candidate.css' 182 'code-menu-before-candidate-edit.png' 'code-candidate-edit-selected-menu.png'
           edit_caret_and_save "$OUT/work/code-fences.md" 'candidate-code-edit.png'
 
@@ -180,7 +181,7 @@ jobs:
           # An unrelated X11 window is not proof of either required Typora fixture.
           python3 "$GUARD" window "$OUT/windows-30s.txt" 'legacy-edit.md - Typora' >/dev/null
           kill -0 "$APP_PID"
-          scrot -z "$OUT/typora-30s.png"
+          scrot -z -a 0,0,1440,825 "$OUT/typora-30s.png"
           : > "$OUT/comparison.txt"
           for pair in \
             'candidate-rtl-6s legacy-rtl-6s' \

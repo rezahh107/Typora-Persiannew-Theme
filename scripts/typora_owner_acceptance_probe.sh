@@ -52,7 +52,9 @@ sleep 2
 openbox >"$OUT/openbox.log" 2>&1 &
 sleep 2
 set_scheme default LIGHT
-typora "$(realpath tests/fixtures/rtl-ltr.md)" --disable-gpu >"$OUT/typora.log" 2>&1 &
+cp tests/fixtures/rtl-ltr.md "$OUT/work/rtl-ltr.md"
+cp -a tests/fixtures/assets "$OUT/work/assets"
+typora "$OUT/work/rtl-ltr.md" --disable-gpu >"$OUT/typora.log" 2>&1 &
 PID=$!
 sleep 12
 kill -0 "$PID"
@@ -92,6 +94,12 @@ for theme in legacy candidate; do
   xdotool mousemove --sync 367 349 click 1
   sleep 3
   snapshot "$theme-export-dialog"
+  # Do not type into Markdown when the expected native file-save dialog is absent.
+  if ! wmctrl -lxp | grep -Eiq 'Save|Export|PDF'; then
+    printf 'PDF_EXPORT_NOT_PROVEN %s: no native save/export window\n' "$theme" >>"$RAW/pdf-results.txt"
+    xdotool key Escape Escape
+    continue
+  fi
   # GTK Save dialog: Ctrl+L enables absolute destination. Never overwrite fixture.
   xdotool key --clearmodifiers ctrl+l
   sleep 0.5

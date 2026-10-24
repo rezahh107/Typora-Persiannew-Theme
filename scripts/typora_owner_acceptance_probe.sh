@@ -77,7 +77,48 @@ xdotool key Escape Escape
 xdotool key --clearmodifiers alt+shift+p
 sleep 3; snapshot print-dialog-attempt
 xdotool key Escape
-record 'PRINT: native print command attempted; PDF output requires file verification'
+record 'PRINT: native print dialog observed; print-to-file not asserted'
+mkdir -p "$OUT/pdf"
+: >"$RAW/pdf-results.txt"
+# Same real RTL fixture, same viewport, verified native theme, native File > Export > PDF.
+for theme in legacy candidate; do
+  if test "$theme" = legacy; then y=215; else y=182; fi
+  xdotool windowactivate --sync "$WID"
+  select_theme "persiannew-$theme.css" "$y" "$theme-export"
+  xdotool mousemove --sync 65 55 click 1
+  sleep 0.7
+  xdotool mousemove --sync 90 684
+  sleep 0.7
+  xdotool mousemove --sync 367 349 click 1
+  sleep 3
+  snapshot "$theme-export-dialog"
+  # GTK Save dialog: Ctrl+L enables absolute destination. Never overwrite fixture.
+  xdotool key --clearmodifiers ctrl+l
+  sleep 0.5
+  xdotool type --clearmodifiers --delay 15 "$OUT/pdf/$theme.pdf"
+  xdotool key Return
+  sleep 4
+  if ! test -s "$OUT/pdf/$theme.pdf"; then
+    xdotool key Return
+    sleep 3
+  fi
+  snapshot "$theme-export-after"
+  if test -s "$OUT/pdf/$theme.pdf" && head -c 5 "$OUT/pdf/$theme.pdf" | grep -q '%PDF-'; then
+    pdfinfo "$OUT/pdf/$theme.pdf" >"$RAW/$theme-pdf-metadata.txt"
+    pdftotext "$OUT/pdf/$theme.pdf" "$OUT/pdf/$theme.txt"
+    printf 'PDF_ACTUALLY_EXPORTED %s sha256=' "$theme" >>"$RAW/pdf-results.txt"
+    sha256sum "$OUT/pdf/$theme.pdf" | cut -d' ' -f1 >>"$RAW/pdf-results.txt"
+    printf 'PAGES %s ' "$theme" >>"$RAW/pdf-results.txt"
+    pdfinfo "$OUT/pdf/$theme.pdf" | awk '/^Pages:/{print $2}' >>"$RAW/pdf-results.txt"
+    printf 'EXTRACTED_TEXT_CHARS %s ' "$theme" >>"$RAW/pdf-results.txt"
+    wc -m <"$OUT/pdf/$theme.txt" >>"$RAW/pdf-results.txt"
+    pdftoppm -f 1 -l 1 -scale-to 1000 -png -singlefile "$OUT/pdf/$theme.pdf" "$RAW/$theme-pdf-preview"
+  else
+    printf 'PDF_EXPORT_NOT_PROVEN %s: no verified file\n' "$theme" >>"$RAW/pdf-results.txt"
+  fi
+  xdotool key Escape Escape
+done
+xdotool windowactivate --sync "$WID"
 xdotool key --clearmodifiers ctrl+slash
 sleep 2; snapshot source-mode-attempt
 xdotool key --clearmodifiers ctrl+slash
@@ -112,11 +153,11 @@ python3 "$GUARD" compare "$RAW/legacy-light.png" "$RAW/candidate-light.png" >"$R
 python3 "$GUARD" compare "$RAW/legacy-dark-attempt.png" "$RAW/candidate-dark-attempt.png" >>"$RAW/comparisons.txt"
 python3 "$GUARD" compare "$RAW/legacy-code-focused.png" "$RAW/candidate-code-focused.png" >>"$RAW/comparisons.txt"
 # Explicit publication allowlist: no profile, cache, local font or license data.
-for path in "$RAW"/*.png "$RAW"/environment.txt "$RAW"/results.txt "$RAW"/theme-verification.txt "$RAW"/comparisons.txt "$RAW"/*-edit-result.txt; do
+for path in "$RAW"/*.png "$RAW"/environment.txt "$RAW"/results.txt "$RAW"/theme-verification.txt "$RAW"/comparisons.txt "$RAW"/*-edit-result.txt "$RAW"/pdf-results.txt "$RAW"/*-pdf-metadata.txt; do
   test -s "$path"
   cp "$path" "$STAGED/"
 done
 find "$STAGED" -mindepth 1 ! -type f | grep -q . && exit 1 || true
 test "$(find "$STAGED" -maxdepth 1 -type f | wc -l)" -ge 20
-record "PROBE_COMPLETE; PDF_EXPORT_NOT_EXECUTED; DARK_MODE_REQUIRES_IMAGE_INSPECTION"
+record "PROBE_COMPLETE; PDF_EXPORT_STATUS_IN_PDF_RESULTS; DARK_MODE_REQUIRES_IMAGE_INSPECTION"
 cp "$RAW/results.txt" "$STAGED/results.txt"

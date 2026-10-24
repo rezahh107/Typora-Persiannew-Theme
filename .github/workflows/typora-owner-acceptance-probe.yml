@@ -20,6 +20,7 @@ jobs:
         run: |
           set -euo pipefail
           python3 scripts/verify.py
+          bash -n scripts/typora_owner_acceptance_probe.sh
           echo "b114384a1bd9a30f1064e8405d5ce31fef66b4af26bec33d4732b8c4b8a76fb9  themes/persiannew/legacy/PersianNew2.css" | sha256sum -c -
           echo "b599e9528907c18acd7e98c5e4516d904bb2aeee27c62be973e7c8555b74aeef  themes/persiannew/persiannew.css" | sha256sum -c -
           sudo mkdir -p /etc/apt/keyrings

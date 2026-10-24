@@ -1,0 +1,1488 @@
+/* Working candidate extracted from last complete v13 CSS section in legacy/PersianNew2.css (original lines 1536-3024).
+   No font binaries redistributed. local() fonts are optional; fallbacks apply when absent.
+   See QUALIFICATION.md for all deviations and outstanding real Typora checks. */
+
+/* ============================================================
+   PersianNew — v13 structural candidate (real Typora untested)
+   Author: رضا
+   Version: 13.0 — Hybrid Code Font + Smart Bidi Build
+
+   Changelog (v12 → v13)
+   - NEW: PersianNew-Code hybrid font (Latin local + Persian Vazir)
+     → فارسی در بلوک کد دیگر با monospace زشت سیستمی نمایش داده نمی‌شود
+   - Code fences: unicode-bidi plaintext + text-align start
+     → جهت هر خط کد خودکار تعیین می‌شود (فارسی=راست، انگلیسی=چپ)
+   - Simplified code child selectors (removed duplicates)
+   - text-align: inherit on code children (sync with plaintext parent)
+   - Responsive: padding-inline instead of padding-left/right
+   - Added contextual ligatures hint for code
+   ============================================================ */
+
+
+/* ============================================================
+   0) Font export hints omitted: original local files unavailable
+   ============================================================ */
+
+
+/* ============================================================
+   1) Font System
+   Real weights only (400 / 700)
+   Latin -> Amazon Ember | Persian -> Vazir
+   ============================================================ */
+
+/* ---------- Latin: Regular ---------- */
+@font-face {
+  font-family: 'PersianNew-UI';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Amazon Ember Display Regular'), local('Amazon Ember Display');
+  unicode-range:
+    U+0020-007F,
+    U+00A0-00FF,
+    U+0100-024F,
+    U+02BB-02BC,
+    U+02C6,
+    U+02DA,
+    U+02DC,
+    U+2000-206F,
+    U+2070-209F,
+    U+20A0-20CF,
+    U+2100-214F,
+    U+2190-21FF,
+    U+2200-22FF,
+    U+FEFF,
+    U+FFFD;
+}
+
+/* ---------- Latin: Bold (Medium as bold) ---------- */
+@font-face {
+  font-family: 'PersianNew-UI';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Amazon Ember Display Medium'), local('Amazon Ember Display');
+  unicode-range:
+    U+0020-007F,
+    U+00A0-00FF,
+    U+0100-024F,
+    U+02BB-02BC,
+    U+02C6,
+    U+02DA,
+    U+02DC,
+    U+2000-206F,
+    U+2070-209F,
+    U+20A0-20CF,
+    U+2100-214F,
+    U+2190-21FF,
+    U+2200-22FF,
+    U+FEFF,
+    U+FFFD;
+}
+
+/* ---------- Persian: Regular ---------- */
+@font-face {
+  font-family: 'PersianNew-UI';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Vazir'), local('Vazir Regular'), local('Vazirmatn');
+  unicode-range:
+    U+0600-06FF,
+    U+0750-077F,
+    U+08A0-08FF,
+    U+FB50-FDFF,
+    U+FE70-FEFF,
+    U+200C-200F,
+    U+202A-202E,
+    U+2066-2069;
+}
+
+/* ---------- Persian: Bold ---------- */
+@font-face {
+  font-family: 'PersianNew-UI';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Vazir Bold'), local('Vazir'), local('Vazirmatn Bold');
+  unicode-range:
+    U+0600-06FF,
+    U+0750-077F,
+    U+08A0-08FF,
+    U+FB50-FDFF,
+    U+FE70-FEFF,
+    U+200C-200F,
+    U+202A-202E,
+    U+2066-2069;
+}
+
+/* ============================================================
+   1.5) Code Font — Hybrid Latin + Persian
+   Latin glyphs from local mono fonts, Persian from Vazir.
+   مرورگر حروف لاتین را از Fira/Consolas و فارسی را از Vazir می‌گیرد.
+   ============================================================ */
+
+/* ---------- Code: Latin (local mono fonts) ---------- */
+@font-face {
+  font-family: 'PersianNew-Code';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src:
+    local('Fira Code'),
+    local('JetBrains Mono'),
+    local('Cascadia Code'),
+    local('Cascadia Mono'),
+    local('Consolas');
+  unicode-range:
+    U+0020-007F,
+    U+00A0-00FF,
+    U+0100-024F,
+    U+2000-206F,
+    U+2070-209F,
+    U+20A0-20CF,
+    U+2100-214F,
+    U+2190-21FF,
+    U+2200-22FF,
+    U+FEFF,
+    U+FFFD;
+}
+
+/* ---------- Code: Persian Regular (Vazir) ---------- */
+@font-face {
+  font-family: 'PersianNew-Code';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Vazir'), local('Vazir Regular'), local('Vazirmatn');
+  unicode-range:
+    U+0600-06FF,
+    U+0750-077F,
+    U+08A0-08FF,
+    U+FB50-FDFF,
+    U+FE70-FEFF,
+    U+200C-200F,
+    U+202A-202E,
+    U+2066-2069;
+}
+
+/* ---------- Code: Persian Bold (Vazir) ---------- */
+@font-face {
+  font-family: 'PersianNew-Code';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Vazir Bold'), local('Vazir'), local('Vazirmatn Bold');
+  unicode-range:
+    U+0600-06FF,
+    U+0750-077F,
+    U+08A0-08FF,
+    U+FB50-FDFF,
+    U+FE70-FEFF,
+    U+200C-200F,
+    U+202A-202E,
+    U+2066-2069;
+}
+
+
+/* ============================================================
+   2) Design Tokens
+   ============================================================ */
+
+:root {
+  color-scheme: light dark;
+
+  --font-ui:
+    'PersianNew-UI',
+    'Vazir',
+    'Vazirmatn',
+    'Tahoma',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Arial,
+    sans-serif;
+
+  --font-code:
+    'PersianNew-Code',
+    'Fira Code',
+    'JetBrains Mono',
+    'Cascadia Code',
+    'Cascadia Mono',
+    'Consolas',
+    'Courier New',
+    'Vazirmatn',
+    'Vazir',
+    'Tahoma',
+    monospace;
+
+  --monospace: var(--font-code);
+
+  /* Typography scale */
+  --ui-font-size: 15.5px;
+  --text-size: 1rem;
+  --text-size-small: 0.92rem;
+  --text-size-table: 0.92rem;
+  --text-size-code: 0.88rem;
+  --text-size-inline-code: 0.86em;
+
+  --line-height-text: 1.82;
+  --line-height-heading: 1.42;
+  --line-height-code: 1.62;
+
+  --h1-size: 2rem;
+  --h2-size: 1.62rem;
+  --h3-size: 1.34rem;
+  --h4-size: 1.14rem;
+  --h5-size: 1.02rem;
+  --h6-size: 0.95rem;
+
+  /* Measure / width */
+  --write-width: 980px;
+  --write-width-lg: 1080px;
+  --write-width-xl: 1180px;
+
+  --sidebar-width-safe: 254px;
+
+  /* Radius */
+  --radius-sm: 4px;
+  --radius: 8px;
+  --radius-lg: 12px;
+
+  /* Colors */
+  --bg-color: #ffffff;
+  --bg-subtle: #f8fafc;
+  --bg-soft: #f1f5f9;
+  --bg-hover: #eef2ff;
+
+  --text-color: #374151;
+  --text-muted: #6b7280;
+  --text-faint: #9ca3af;
+
+  --accent-color: #2563eb;
+  --accent-hover: #1d4ed8;
+  --accent-soft: #eff6ff;
+
+  --border-color: #e5e7eb;
+  --border-strong: #d1d5db;
+
+  --code-bg: #f8fafc;
+  --code-text: #334155;
+  --code-inline-color: #be185d;
+  --code-border: #e2e8f0;
+
+  --quote-bg: #f8fafc;
+  --quote-border: #2563eb;
+
+  --table-stripe: #fafafa;
+  --table-hover: #f4f7ff;
+
+  --selection-bg: #bfdbfe;
+  --selection-text: #1e3a8a;
+
+  --shadow-sm: rgba(0, 0, 0, 0.06);
+  --shadow-md: rgba(0, 0, 0, 0.12);
+
+  --syn-keyword: #be185d;
+  --syn-string: #dc2626;
+  --syn-number: #7c3aed;
+  --syn-comment: #6b7280;
+  --syn-property: #2563eb;
+  --syn-tag: #059669;
+  --syn-atom: #d97706;
+  --syn-variable: #0369a1;
+  --syn-operator: #be185d;
+}
+
+
+/* ============================================================
+   3) Base
+   ============================================================ */
+
+html {
+  font-size: var(--ui-font-size);
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  direction: rtl;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
+}
+
+body {
+  --monospace: var(--font-code);
+
+  margin: 0;
+  padding: 0;
+
+  direction: rtl !important;
+  text-align: right !important;
+
+  font-family: var(--font-ui) !important;
+  font-size: 1rem !important;
+  line-height: var(--line-height-text) !important;
+  font-weight: 400;
+  font-synthesis: none;
+
+  color: var(--text-color);
+  background-color: var(--bg-color);
+
+  caret-color: var(--accent-color);
+  overflow-x: hidden;
+}
+
+#write {
+  direction: rtl !important;
+  text-align: right !important;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+::selection {
+  background-color: var(--selection-bg);
+  color: var(--selection-text);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+
+/* ============================================================
+   4) Layout / Sidebar safety
+   Note: 'content' kept ONLY for sidebar-safe layout where
+   Typora actually uses it as a positioned container.
+   ============================================================ */
+
+body.no-collapse-outline content,
+body.no-collapse-file-tree content,
+body.no-collapse-sidebar content,
+body.show-sidebar content,
+body.sidebar-open content {
+  right: var(--sidebar-width-safe) !important;
+  width: auto !important;
+}
+
+#write {
+  position: relative;
+  width: auto;
+  max-width: min(var(--write-width), 100%);
+  margin: 0 auto;
+  padding: 2rem 3.25rem 4rem;
+
+  font-size: var(--text-size) !important;
+  line-height: var(--line-height-text) !important;
+  color: var(--text-color);
+  background: var(--bg-color);
+
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
+@media only screen and (min-width: 1400px) {
+  #write { max-width: min(var(--write-width-lg), 100%); }
+}
+
+@media only screen and (min-width: 1700px) {
+  #write { max-width: min(var(--write-width-xl), 100%); }
+}
+
+@media only screen and (max-width: 768px) {
+  #write { max-width: 100%; padding: 1.25rem; }
+}
+
+@media only screen and (max-width: 900px) {
+  body.no-collapse-outline #write,
+  body.no-collapse-file-tree #write,
+  body.no-collapse-sidebar #write,
+  body.show-sidebar #write,
+  body.sidebar-open #write {
+    padding-inline: 0.85rem;
+    max-width: 100%;
+  }
+}
+
+
+/* ============================================================
+   5) Main Typography
+   ============================================================ */
+
+#write,
+#write p,
+#write li,
+#write blockquote,
+#write blockquote p,
+#write table,
+#write th,
+#write td,
+#write h1,
+#write h2,
+#write h3,
+#write h4,
+#write h5,
+#write h6,
+#write strong,
+#write b,
+#write em,
+#write i,
+#write mark,
+#write a,
+#write .md-heading,
+#write .md-plain,
+#write .md-strong,
+#write .md-em,
+#write .md-link,
+#write .md-expand,
+#write .md-toc,
+#write .md-toc * {
+  font-family: var(--font-ui) !important;
+}
+
+#write p,
+#write li,
+#write blockquote,
+#write blockquote p,
+#write h1,
+#write h2,
+#write h3,
+#write h4,
+#write h5,
+#write h6,
+#write table,
+#write th,
+#write td,
+#write .md-heading,
+#write .md-plain,
+#write .md-toc,
+#write .md-toc * {
+  direction: rtl;
+  text-align: right;
+  unicode-bidi: isolate;
+}
+
+#write p,
+#write li {
+  font-size: var(--text-size) !important;
+  line-height: var(--line-height-text) !important;
+  margin-top: 0;
+  margin-bottom: 1.1em;
+}
+
+#write h1,
+#write h2,
+#write h3,
+#write h4,
+#write h5,
+#write h6 {
+  font-weight: 700 !important;
+  line-height: var(--line-height-heading) !important;
+  color: var(--text-color);
+  letter-spacing: 0;
+}
+
+#write h1 {
+  font-size: var(--h1-size) !important;
+  margin: 1.35em 0 0.65em;
+  padding-bottom: 0.3em;
+  border-bottom: 2px solid var(--accent-color);
+}
+
+#write h2 {
+  font-size: var(--h2-size) !important;
+  margin: 1.25em 0 0.6em;
+  padding-bottom: 0.28em;
+  border-bottom: 1px solid var(--border-color);
+}
+
+#write h3 {
+  font-size: var(--h3-size) !important;
+  margin: 1.15em 0 0.55em;
+  color: var(--accent-color);
+}
+
+#write h4 {
+  font-size: var(--h4-size) !important;
+  margin: 1.05em 0 0.5em;
+}
+
+#write h5 {
+  font-size: var(--h5-size) !important;
+  margin: 1em 0 0.45em;
+}
+
+#write h6 {
+  font-size: var(--h6-size) !important;
+  margin: 1em 0 0.45em;
+  color: var(--text-muted);
+}
+
+#write strong,
+#write b,
+#write .md-strong {
+  font-weight: 700 !important;
+}
+
+em,
+i {
+  font-style: italic;
+}
+
+mark {
+  background-color: #fef08a;
+  color: #374151;
+  border-radius: 3px;
+  padding: 0 0.22em;
+}
+
+
+/* ============================================================
+   6) Links / HR / Images
+   ============================================================ */
+
+#write a {
+  color: var(--accent-color);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+}
+
+#write a:hover {
+  color: var(--accent-hover);
+  border-bottom-color: currentColor;
+}
+
+#write hr {
+  border: 0;
+  height: 1px;
+  background: linear-gradient(
+    to left,
+    transparent,
+    var(--border-color) 18%,
+    var(--border-color) 82%,
+    transparent
+  );
+  margin: 2.2rem 0;
+}
+
+#write img {
+  display: block;
+  margin: 1.4rem auto;
+  border-radius: var(--radius);
+}
+
+.md-image > .md-meta {
+  direction: ltr !important;
+  text-align: left !important;
+  unicode-bidi: isolate;
+  font-family: var(--font-code) !important;
+  color: var(--text-muted);
+  font-size: 0.84em;
+}
+
+
+/* ============================================================
+   7) Lists / Tasks
+   ============================================================ */
+
+#write ul,
+#write ol {
+  direction: rtl;
+  text-align: right;
+  padding-right: 1.8em;
+  padding-left: 0;
+  margin-top: 0;
+  margin-bottom: 1.1em;
+  list-style-position: outside;
+}
+
+#write li {
+  margin: 0.42rem 0;
+}
+
+#write li > ul,
+#write li > ol {
+  margin-top: 0.25rem;
+  margin-bottom: 0;
+}
+
+.task-list,
+#write .task-list {
+  padding-right: 0;
+  padding-left: 0;
+}
+
+.md-task-list-item,
+#write .md-task-list-item {
+  list-style: none;
+  padding-right: 2rem;
+  padding-left: 0;
+}
+
+.md-task-list-item > input,
+#write .md-task-list-item > input {
+  accent-color: var(--accent-color);
+  width: 1.05rem;
+  height: 1.05rem;
+  margin-right: -1.65rem;
+  margin-left: 0.5rem;
+  vertical-align: middle;
+  position: relative;
+  top: -1px;
+}
+
+
+/* ============================================================
+   8) Blockquote — asymmetric RTL padding
+   ============================================================ */
+
+#write blockquote {
+  margin: 1.4em 0;
+  padding-top: 0.9em;
+  padding-bottom: 0.9em;
+  padding-right: 1.25em;
+  padding-left: 0.9em;
+  background-color: var(--quote-bg);
+  border-right: 4px solid var(--quote-border);
+  border-left: none;
+  border-radius: var(--radius);
+  color: var(--text-color);
+}
+
+#write blockquote p {
+  margin: 0;
+}
+
+#write blockquote p + p {
+  margin-top: 0.7em;
+}
+
+
+/* ============================================================
+   9) Tables — safe wrapper approach (no display:block)
+   ============================================================ */
+
+#write .md-table-wrap,
+#write figure,
+#write .table-wrapper {
+  display: block;
+  overflow-x: auto;
+  max-width: 100%;
+  margin: 1.8em 0;
+}
+
+#write table {
+  width: 100%;
+  max-width: 100%;
+  border-collapse: collapse;
+  table-layout: auto;
+  margin: 1.8em 0;
+
+  direction: rtl;
+  text-align: right;
+
+  font-size: var(--text-size-table) !important;
+  line-height: 1.55 !important;
+}
+
+#write .md-table-wrap > table,
+#write figure > table,
+#write .table-wrapper > table {
+  margin: 0;
+}
+
+#write table th,
+#write table td {
+  border: 1px solid var(--border-color);
+  padding: 0.72rem 0.95rem;
+  text-align: right;
+  vertical-align: top;
+}
+
+#write table th {
+  background-color: var(--bg-subtle);
+  font-weight: 700;
+  border-bottom: 2px solid var(--border-strong);
+  white-space: nowrap;
+}
+
+#write table tbody tr:nth-child(even) {
+  background-color: var(--table-stripe);
+}
+
+#write table tbody tr:hover {
+  background-color: var(--table-hover);
+}
+
+
+/* ============================================================
+   10) English helpers — scoped to #write only
+   ============================================================ */
+
+#write .latin,
+#write .en,
+#write span[lang="en"],
+#write span[lang="en-US"],
+#write span[lang="en-GB"],
+#write span[lang^="en-"] {
+  direction: ltr !important;
+  text-align: left !important;
+  unicode-bidi: isolate;
+}
+
+
+/* ============================================================
+   11) Code
+   Hybrid font + smart bidi (plaintext) for mixed FA/EN code.
+   ============================================================ */
+
+pre,
+code,
+kbd,
+samp {
+  font-family: var(--font-code) !important;
+}
+
+/* Inline code (rendered + CodeMirror inline) */
+#write code:not(pre code),
+#write p code,
+#write li code,
+#write td code,
+#write th code,
+#write blockquote code,
+#write h1 code,
+#write h2 code,
+#write h3 code,
+#write h4 code,
+#write h5 code,
+#write h6 code,
+.cm-inline-code {
+  direction: ltr;
+  unicode-bidi: plaintext;
+  text-align: start;
+  display: inline-block;
+
+  font-family: var(--font-code) !important;
+  font-size: var(--text-size-inline-code) !important;
+  line-height: 1.45 !important;
+
+  color: var(--code-inline-color);
+  background-color: var(--code-bg);
+  border: 1px solid var(--code-border);
+  border-radius: var(--radius-sm);
+  padding: 0.14em 0.42em;
+}
+
+/* CodeMirror inline code should not get extra box in source mode */
+.CodeMirror .cm-inline-code {
+  display: inline;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+/* Code fences — direction per line decided automatically */
+#write pre.md-fences,
+#write .md-fences {
+  direction: ltr;
+  unicode-bidi: plaintext;
+  text-align: start;
+
+  font-family: var(--font-code) !important;
+  font-size: var(--text-size-code) !important;
+  line-height: var(--line-height-code) !important;
+  font-variant-ligatures: contextual;
+
+  color: var(--code-text);
+  background-color: var(--code-bg);
+
+  border: 1px solid var(--code-border);
+  border-left: 4px solid var(--accent-color);
+  border-radius: var(--radius);
+
+  padding: 1rem 1.2rem;
+  margin: 1.4em 0;
+
+  white-space: pre;
+  word-break: normal;
+  overflow-x: auto;
+  max-width: 100%;
+  box-shadow: 0 1px 4px var(--shadow-sm);
+}
+
+/* Simplified code children (no duplicate selectors) */
+#write pre *,
+#write code *,
+.md-fences *,
+pre code {
+  direction: ltr;
+  unicode-bidi: plaintext;
+  text-align: inherit;
+
+  font-family: var(--font-code) !important;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+
+
+/* ============================================================
+   12) Source Mode / CodeMirror
+   ============================================================ */
+
+#typora-source {
+  --monospace: var(--font-code);
+  direction: ltr !important;
+  text-align: left !important;
+  unicode-bidi: plaintext;
+  font-family: var(--font-code) !important;
+  font-size: var(--text-size-code) !important;
+  line-height: var(--line-height-code) !important;
+  color: var(--code-text);
+  background-color: var(--bg-color);
+}
+
+#typora-source .CodeMirror-lines {
+  max-width: min(var(--write-width), 100%);
+  margin: 0 auto;
+}
+
+.cm-s-inner,
+.cm-s-inner *,
+.cm-s-inner.CodeMirror,
+.CodeMirror,
+.CodeMirror *,
+.CodeMirror pre,
+.CodeMirror-code,
+.CodeMirror-line {
+  font-family: var(--font-code) !important;
+  font-size: var(--text-size-code) !important;
+  line-height: var(--line-height-code) !important;
+}
+
+.cm-s-inner.CodeMirror,
+.cm-s-inner {
+  color: var(--code-text);
+  background-color: var(--code-bg);
+}
+
+.cm-s-inner .cm-header,
+.cm-s-typora-default .cm-header { color: var(--accent-color); font-weight: 700; }
+.cm-s-inner .cm-keyword,
+.cm-s-typora-default .cm-keyword { color: var(--syn-keyword); font-weight: 600; }
+.cm-s-inner .cm-string,
+.cm-s-inner .cm-string-2,
+.cm-s-typora-default .cm-string,
+.cm-s-typora-default .cm-string-2 { color: var(--syn-string); }
+.cm-s-inner .cm-number,
+.cm-s-typora-default .cm-number { color: var(--syn-number); }
+.cm-s-inner .cm-atom,
+.cm-s-typora-default .cm-atom { color: var(--syn-atom); }
+.cm-s-inner .cm-property,
+.cm-s-typora-default .cm-property { color: var(--syn-property); }
+.cm-s-inner .cm-comment,
+.cm-s-typora-default .cm-comment { color: var(--syn-comment); font-style: italic; }
+.cm-s-inner .cm-link,
+.cm-s-typora-default .cm-link { color: var(--accent-color); }
+.cm-s-inner .cm-tag,
+.cm-s-typora-default .cm-tag { color: var(--syn-tag); font-weight: 600; }
+.cm-s-inner .cm-variable,
+.cm-s-typora-default .cm-variable { color: var(--syn-variable); }
+.cm-s-inner .cm-operator,
+.cm-s-typora-default .cm-operator { color: var(--syn-operator); }
+
+.CodeMirror-cursor,
+.CodeMirror.cm-s-typora-default div.CodeMirror-cursor {
+  border-left: 2px solid var(--accent-color);
+}
+
+
+/* ============================================================
+   13) Meta / Math / Diagrams
+   ============================================================ */
+
+#write pre.md-meta-block,
+.md-meta-block,
+.md-meta-block * {
+  direction: ltr !important;
+  text-align: left !important;
+  unicode-bidi: isolate;
+  font-family: var(--font-code) !important;
+  font-size: 0.84rem;
+  line-height: 1.6;
+  color: var(--text-muted);
+  background-color: var(--bg-subtle);
+  border: 1px dashed var(--border-color);
+  border-radius: var(--radius);
+  padding: 0.8rem 1rem;
+  margin: 0 0 1.8rem;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+.math-inline,
+.math-display,
+.md-mathjax-midline,
+.md-diagram-panel,
+.md-diagram-panel * {
+  direction: ltr !important;
+  unicode-bidi: isolate;
+}
+
+.math-display {
+  display: block;
+  text-align: center !important;
+  overflow-x: auto;
+  margin: 1.4em 0;
+  padding: 0.5rem;
+}
+
+.md-diagram-panel {
+  margin-top: 1.4rem;
+  background-color: var(--bg-color);
+  border-radius: var(--radius);
+  padding: 1rem;
+  text-align: center !important;
+  overflow-x: auto;
+}
+
+
+/* ============================================================
+   14) TOC / Footnotes
+   ============================================================ */
+
+.footnotes,
+#write .footnotes {
+  border-top: 1px solid var(--border-color);
+  margin-top: 2.2rem;
+  padding-top: 1rem;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  direction: rtl;
+  text-align: right;
+}
+
+.md-footnote {
+  background-color: var(--code-bg);
+  border-radius: var(--radius-sm);
+  color: var(--accent-color);
+  padding: 0 0.3em;
+  font-size: 0.8em;
+  vertical-align: super;
+}
+
+.md-toc {
+  direction: rtl;
+  text-align: right;
+  background-color: var(--bg-subtle);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  padding: 1rem 1.15rem;
+  margin: 1.4rem 0;
+}
+
+.md-toc-content {
+  line-height: 1.9;
+  font-size: 0.94rem;
+}
+
+.md-toc-h2 { padding-right: 1.1em; }
+.md-toc-h3 { padding-right: 2.2em; }
+.md-toc-h4 { padding-right: 3.3em; }
+
+
+/* ============================================================
+   15) Sidebar / Outline
+   ============================================================ */
+
+#typora-sidebar {
+  font-family: var(--font-ui) !important;
+  font-size: 0.94rem !important;
+  color: var(--text-color);
+  background-color: var(--bg-subtle);
+  border-left: 1px solid var(--border-color);
+}
+
+.sidebar-content,
+.outline-content,
+.outline-content ul,
+.outline-content li,
+.file-list-item {
+  font-family: var(--font-ui) !important;
+}
+
+.outline-content,
+.outline-content ul,
+.outline-content li,
+.file-list-item {
+  direction: rtl;
+  text-align: right;
+}
+
+.sidebar-tab-btn {
+  font-family: var(--font-ui) !important;
+  color: var(--text-muted);
+}
+
+.sidebar-tab-btn.active {
+  color: var(--accent-color);
+  border-bottom-color: var(--accent-color);
+}
+
+.outline-title {
+  font-family: var(--font-ui) !important;
+  font-size: 0.94rem !important;
+  font-weight: 700;
+  color: var(--text-color);
+  margin-top: 10px;
+}
+
+.outline-item {
+  direction: rtl;
+  text-align: right;
+  font-family: var(--font-ui) !important;
+  font-size: 0.92rem !important;
+  line-height: 1.55 !important;
+  color: var(--text-color);
+  border-radius: var(--radius-sm);
+}
+
+.outline-item:hover {
+  background-color: var(--bg-soft);
+}
+
+.outline-active,
+.outline-item-active > .outline-item {
+  color: var(--accent-color);
+  font-weight: 700;
+  background-color: var(--accent-soft);
+}
+
+.outline-expander {
+  width: 18px;
+}
+
+.outline-expander:before {
+  content: "+";
+  font-family: inherit;
+  color: var(--text-muted);
+  font-size: 1.2rem;
+  top: -0.08rem;
+}
+
+.outline-item-open > .outline-item > .outline-expander:before {
+  content: "-";
+}
+
+
+/* ============================================================
+   16) Menus / Tooltips / Forms
+   ============================================================ */
+
+.code-tooltip {
+  background: var(--bg-color);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 16px var(--shadow-md);
+}
+
+.code-tooltip-content {
+  font-size: 0.93rem;
+  font-family: var(--font-code) !important;
+}
+
+.context-menu,
+.dropdown-menu,
+#toc-dropmenu,
+.megamenu-content,
+.ty-menu-item {
+  font-family: var(--font-ui) !important;
+  font-size: 0.93rem !important;
+  color: var(--text-color);
+  background-color: var(--bg-subtle);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 16px var(--shadow-md);
+}
+
+.context-menu li,
+.context-menu a,
+.dropdown-menu li,
+.dropdown-menu a,
+.megamenu-content li,
+.megamenu-content a,
+.ty-menu-item {
+  font-family: var(--font-ui) !important;
+}
+
+input,
+textarea,
+select {
+  font-family: var(--font-ui) !important;
+  accent-color: var(--accent-color);
+}
+
+
+/* ============================================================
+   17) Preserve Typora icon fonts
+   ============================================================ */
+
+.fa,
+.fa::before,
+.fa::after,
+[class^="fa-"],
+[class^="fa-"]::before,
+[class^="fa-"]::after,
+[class*=" fa-"],
+[class*=" fa-"]::before,
+[class*=" fa-"]::after {
+  font-family: FontAwesome !important;
+  font-style: normal !important;
+  font-weight: normal !important;
+  font-variant: normal !important;
+}
+
+.ion,
+.ion::before,
+.ion::after,
+[class^="ion-"],
+[class^="ion-"]::before,
+[class^="ion-"]::after,
+[class*=" ion-"],
+[class*=" ion-"]::before,
+[class*=" ion-"]::after {
+  font-family: Ionicons !important;
+  font-style: normal !important;
+  font-weight: normal !important;
+  font-variant: normal !important;
+}
+
+.typora-icon,
+.typora-icon::before,
+.typora-icon::after,
+[class^="typora-icon"],
+[class^="typora-icon"]::before,
+[class^="typora-icon"]::after,
+[class*=" typora-icon"],
+[class*=" typora-icon"]::before,
+[class*=" typora-icon"]::after {
+  font-family: typora-icon !important;
+  font-style: normal !important;
+  font-weight: normal !important;
+  font-variant: normal !important;
+}
+
+.ty-file,
+.ty-file::before,
+.ty-file::after,
+[class^="ty-file"],
+[class^="ty-file"]::before,
+[class^="ty-file"]::after,
+[class*=" ty-file"],
+[class*=" ty-file"]::before,
+[class*=" ty-file"]::after {
+  font-family: ty-file !important;
+  font-style: normal !important;
+  font-weight: normal !important;
+  font-variant: normal !important;
+}
+
+
+/* ============================================================
+   18) Numeric rendering
+   ============================================================ */
+
+#write,
+#write p,
+#write li,
+#write blockquote,
+#write table,
+#write th,
+#write td,
+#write h1,
+#write h2,
+#write h3,
+#write h4,
+#write h5,
+#write h6 {
+  font-variant-numeric: normal;
+  font-feature-settings: "kern" 1, "liga" 1;
+}
+
+#write pre,
+#write pre *,
+#write code,
+#write code *,
+pre,
+pre *,
+code,
+code *,
+.cm-s-inner,
+.cm-s-inner *,
+.CodeMirror,
+.CodeMirror *,
+#typora-source,
+#typora-source * {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "kern" 1, "liga" 1, "tnum" 1;
+}
+
+
+/* ============================================================
+   19) Scrollbars — scoped (no universal selector)
+   ============================================================ */
+
+body,
+#write,
+#typora-sidebar,
+.CodeMirror-scroll,
+.md-fences,
+.md-table-wrap,
+.table-wrapper,
+#typora-source {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color) transparent;
+}
+
+body::-webkit-scrollbar,
+#write::-webkit-scrollbar,
+#typora-sidebar::-webkit-scrollbar,
+.CodeMirror-scroll::-webkit-scrollbar,
+.md-fences::-webkit-scrollbar,
+.md-table-wrap::-webkit-scrollbar,
+.table-wrapper::-webkit-scrollbar,
+#typora-source::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+body::-webkit-scrollbar-track,
+#write::-webkit-scrollbar-track,
+#typora-sidebar::-webkit-scrollbar-track,
+.CodeMirror-scroll::-webkit-scrollbar-track,
+.md-fences::-webkit-scrollbar-track,
+.md-table-wrap::-webkit-scrollbar-track,
+.table-wrapper::-webkit-scrollbar-track,
+#typora-source::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+body::-webkit-scrollbar-thumb,
+#write::-webkit-scrollbar-thumb,
+#typora-sidebar::-webkit-scrollbar-thumb,
+.CodeMirror-scroll::-webkit-scrollbar-thumb,
+.md-fences::-webkit-scrollbar-thumb,
+.md-table-wrap::-webkit-scrollbar-thumb,
+.table-wrapper::-webkit-scrollbar-thumb,
+#typora-source::-webkit-scrollbar-thumb {
+  background-color: var(--border-color);
+  border-radius: 4px;
+}
+
+body::-webkit-scrollbar-thumb:hover,
+#write::-webkit-scrollbar-thumb:hover,
+#typora-sidebar::-webkit-scrollbar-thumb:hover,
+.CodeMirror-scroll::-webkit-scrollbar-thumb:hover,
+.md-fences::-webkit-scrollbar-thumb:hover,
+.md-table-wrap::-webkit-scrollbar-thumb:hover,
+.table-wrapper::-webkit-scrollbar-thumb:hover,
+#typora-source::-webkit-scrollbar-thumb:hover {
+  background-color: var(--border-strong);
+}
+
+
+/* ============================================================
+   20) Dark Mode
+   ============================================================ */
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-color: #292929;
+    --bg-subtle: #1f1f1f;
+    --bg-soft: #333333;
+    --bg-hover: #353535;
+
+    --text-color: #f8f8f2;
+    --text-muted: #a1a1aa;
+    --text-faint: #71717a;
+
+    --accent-color: #fcba03;
+    --accent-hover: #fbbf24;
+    --accent-soft: rgba(252, 186, 3, 0.12);
+
+    --border-color: #3d3d3d;
+    --border-strong: #555555;
+
+    --code-bg: #1a1a1a;
+    --code-text: #e2e8f0;
+    --code-inline-color: #f3b3f8;
+    --code-border: #3d3d3d;
+
+    --quote-bg: #333333;
+    --quote-border: #fcba03;
+
+    --table-stripe: #242424;
+    --table-hover: #2e2e2e;
+
+    --selection-bg: rgba(59, 130, 246, 0.45);
+    --selection-text: #ffffff;
+
+    --shadow-sm: rgba(0, 0, 0, 0.25);
+    --shadow-md: rgba(0, 0, 0, 0.45);
+
+    --syn-keyword: #f472b6;
+    --syn-string: #fbbf24;
+    --syn-number: #a78bfa;
+    --syn-comment: #6b7280;
+    --syn-property: #60a5fa;
+    --syn-tag: #34d399;
+    --syn-atom: #fb923c;
+    --syn-variable: #93c5fd;
+    --syn-operator: #f472b6;
+  }
+
+  mark {
+    background-color: #854d0e;
+    color: #fef9c3;
+  }
+}
+
+
+/* ============================================================
+   21) Accessibility
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --border-color: var(--text-color);
+    --border-strong: var(--text-color);
+    --text-muted: var(--text-color);
+    --shadow-sm: transparent;
+    --shadow-md: transparent;
+  }
+
+  #write pre.md-fences,
+  #write .md-fences,
+  #write code:not(pre code),
+  #write table th,
+  #write table td {
+    border-width: 2px;
+  }
+
+  #write blockquote {
+    border-right-width: 5px;
+  }
+
+  #write a {
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+  }
+}
+
+@media (forced-colors: active) {
+  #write blockquote,
+  #write pre.md-fences,
+  #write .md-fences,
+  #write code:not(pre code),
+  #write table th,
+  #write table td {
+    background-color: Canvas;
+    color: CanvasText;
+    border-color: CanvasText;
+    box-shadow: none;
+  }
+
+  #write a { color: LinkText; }
+}
+
+
+/* ============================================================
+   22) Print
+   ============================================================ */
+
+@media print {
+  body {
+    direction: rtl !important;
+    text-align: right !important;
+    background: white;
+    color: black;
+    font-size: 12pt;
+    line-height: 1.6;
+  }
+
+  #write {
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    background: white;
+    color: black;
+  }
+
+  #write a {
+    color: black;
+    border-bottom: 1px solid black;
+  }
+
+  #write a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.75em;
+    color: #666;
+  }
+
+  #write pre.md-fences,
+  #write .md-fences {
+    background: #f8f8f8;
+    color: black;
+    border: 1px solid #ccc;
+    box-shadow: none;
+    white-space: pre-wrap;
+    word-break: break-word;
+    page-break-inside: avoid;
+  }
+
+  #write blockquote {
+    background: #f8f8f8;
+    color: black;
+    border-right-color: #ccc;
+  }
+
+  #write table,
+  #write img,
+  #write pre.md-fences {
+    page-break-inside: avoid;
+  }
+
+  #typora-sidebar,
+  .outline-item,
+  .code-tooltip,
+  .md-image > .md-meta {
+    display: none;
+  }
+}

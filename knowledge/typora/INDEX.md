@@ -21,7 +21,6 @@
 | OS differences and application versions | [Write Custom Theme](https://theme.typora.io/doc/Write-Custom-Theme/), [What's New 1.10](https://support.typora.io/What's-New-1.10/) | INDEXED; no supported-version matrix proved |
 | Light/dark and platform modes | [About Themes](https://support.typora.io/About-Themes/), [Dark Mode](https://support.typora.io/Dark-Mode/) | DOCUMENTED basic mechanism and theme selection; runtime untested |
 | Other support topics (non-theme) | [Typora support index](https://support.typora.io/) | UNCLASSIFIED; needs complete-site inventory and applicability review |
-
 | Legacy export asset hint | [Custom Fonts](https://support.typora.io/Custom-Font/), [Export](https://support.typora.io/Export/) | Exact `@include-when-export` semantics NOT_PROVEN in official pages checked; PersianNew removed references to absent assets |
 
 ## Maintenance method

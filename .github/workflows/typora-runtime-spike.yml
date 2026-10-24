@@ -26,7 +26,7 @@ jobs:
           sudo apt-get install -y -qq typora xvfb openbox xdotool wmctrl scrot fonts-noto-core
           dpkg-query -W typora
           sha256sum themes/persiannew/legacy/PersianNew2.css
-      - name: Launch actual Typora with Markdown fixture in Xvfb
+      - name: Launch actual Typora without forbidden debug switches
         shell: bash
         run: |
           set -euo pipefail
@@ -46,22 +46,19 @@ jobs:
           cp themes/persiannew/persiannew.css "$HOME/.config/Typora/themes/persiannew.css"
           echo "Theme file sha256: $(sha256sum "$HOME/.config/Typora/themes/persiannew.css")" >> "$OUT/environment.txt"
           echo "Opening $(realpath tests/fixtures/rtl-ltr.md)" | tee -a "$OUT/environment.txt"
-          typora "$(realpath tests/fixtures/rtl-ltr.md)" --disable-gpu --remote-debugging-port=9222 >"$OUT/typora.stdout.log" 2>&1 &
+          typora "$(realpath tests/fixtures/rtl-ltr.md)" --disable-gpu >"$OUT/typora.stdout.log" 2>&1 &
           APP_PID=$!
           echo "Typora launched with PID=$APP_PID" | tee -a "$OUT/environment.txt"
           sleep 12
           wmctrl -lxp | tee "$OUT/windows-12s.txt" || true
           xdotool search --onlyvisible --name '.' getwindowname >"$OUT/window-titles-12s.txt" 2>&1 || true
           scrot -z "$OUT/typora-12s.png"
-          curl -fsS --connect-timeout 2 --max-time 4 http://127.0.0.1:9222/json/list >"$OUT/devtools-12s.json" || true
           sleep 18
           wmctrl -lxp | tee "$OUT/windows-30s.txt" || true
           scrot -z "$OUT/typora-30s.png"
-          curl -fsS --connect-timeout 2 --max-time 4 http://127.0.0.1:9222/json/list >"$OUT/devtools-30s.json" || true
           echo "PROCESS:" | tee -a "$OUT/environment.txt"
           ps -p "$APP_PID" -o pid,comm,stat= | tee -a "$OUT/environment.txt" || true
           echo "Window titles:" && cat "$OUT/window-titles-12s.txt" || true
-          echo "Devtools targets:" && head -c 1800 "$OUT/devtools-30s.json" || true
           if [ ! -s "$OUT/windows-30s.txt" ]; then
             echo "No X11 window visible; Typora GUI proof fails."
             exit 1

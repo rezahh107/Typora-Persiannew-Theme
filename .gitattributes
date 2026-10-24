@@ -1,2 +1,5 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Preserve the archived v13 source byte-for-byte, including CRLF endings.
+themes/persiannew/legacy/PersianNew2.css -text

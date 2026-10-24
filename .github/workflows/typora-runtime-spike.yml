@@ -58,7 +58,7 @@ jobs:
           if [ -n "$WID" ]; then
             wmctrl -ir "$WID" -e 0,50,40,1300,820
             xdotool windowactivate --sync "$WID"
-            xdotool mousemove --window "$WID" 267 35 click 1
+            xdotool mousemove --sync 315 55 click 1
             sleep 1
             scrot -z "$OUT/themes-menu.png"
             xdotool key Escape

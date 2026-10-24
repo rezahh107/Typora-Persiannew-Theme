@@ -2,11 +2,11 @@
 
 A multi-theme repository and AI-assisted workflow for designing, testing, installing, maintaining, and eventually releasing independent [Typora](https://typora.io/) themes.
 
-**Current state (2026-10-23): foundation in progress; no qualified or installable theme yet.** PersianNew's genuine v13 CSS has now been recovered and preserved byte-for-byte as an [unqualified historical input](themes/persiannew/INTAKE.md), **not** as the declared install CSS. The reported v14 source remains unverified. Source recovery does not prove Typora compatibility or authorize font redistribution.
+**Current state (2026-10-24): PersianNew v13 structural candidate proposed for review; real Typora qualification remains NOT_EXECUTED.** The [install CSS](themes/persiannew/persiannew.css) is derived from the last complete CSS section within the [immutable 3,024-line legacy intake](themes/persiannew/INTAKE.md); the historical file also contains duplicated code and conversation text. The candidate's [known differences and font restrictions](themes/persiannew/QUALIFICATION.md) matter. Authentic v14 remains unavailable.
 
 ## Start here
 
-- **Use or develop a theme:** [themes/README.md](themes/README.md); the current [PersianNew record](themes/persiannew/README.md) explicitly marks the source as pending.
+- **Use or develop a theme:** [themes/README.md](themes/README.md); the [PersianNew candidate](themes/persiannew/README.md) explains installation and unproven runtime behavior.
 - **Create/edit with an AI or manually:** [workflows/CREATE_THEME.md](workflows/CREATE_THEME.md) and [AGENTS.md](AGENTS.md).
 - **Author CSS from official Typora evidence:** [knowledge/typora/INDEX.md](knowledge/typora/INDEX.md) and [verified authoring rules](knowledge/typora/AUTHORING_RULES.md).
 - **Run shared structural verification:** `python3 scripts/verify.py` (Python 3.10+, standard library only).
@@ -22,7 +22,7 @@ A multi-theme repository and AI-assisted workflow for designing, testing, instal
 
 ## Install (only for a source-ready theme)
 
-For a theme marked `ready`, open Typora **Preferences → Appearance → Open Theme Folder**, copy its declared CSS to the **top level** of that folder and its licensed relative assets in their referenced paths, restart Typora, and select the theme from the **Themes** menu. Refer to the theme's README for exact supported versions/platforms. There is no installable PersianNew file in this repository today.
+For a theme marked `ready`, open Typora **Preferences → Appearance → Open Theme Folder**, copy its declared CSS to the **top level** of that folder and its licensed relative assets in their referenced paths, restart Typora, and select the theme from the **Themes** menu. Refer to the theme's README for exact supported versions/platforms. PersianNew has a source-ready candidate, but no runtime/visual approval, packaged Release, or guaranteed font equivalence. See its own README before installing.
 
 ## Authority and release
 

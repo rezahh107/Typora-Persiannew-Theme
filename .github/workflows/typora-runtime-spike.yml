@@ -191,8 +191,16 @@ jobs:
             'candidate-code-focus-13s legacy-code-focus-13s'; do
             read -r first second <<< "$pair"
             # Missing/invalid PNG input is fatal. Difference is reported, NEVER a parity PASS.
-            python3 "$GUARD" compare "$OUT/$first.png" "$OUT/$second.png" \
-              | tee -a "$OUT/comparison.txt"
+            # The controlled RTL and post-focus pairs must match the verified baseline.
+            # The initial unfocused code-fence pair is observational: its delta is documented,
+            # not misrepresented as parity and not automatically treated as invalid evidence.
+            if [[ "$first" == candidate-rtl-* || "$first" == candidate-code-focus-* ]]; then
+              python3 "$GUARD" compare "$OUT/$first.png" "$OUT/$second.png" --must-equal \
+                | tee -a "$OUT/comparison.txt"
+            else
+              python3 "$GUARD" compare "$OUT/$first.png" "$OUT/$second.png" \
+                | tee -a "$OUT/comparison.txt"
+            fi
           done
 
           # Stage only named observations; NEVER stage ~/.config/Typora or raw runner temp.
